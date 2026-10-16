@@ -1,0 +1,6 @@
+{
+  "name": "Mizoram Errand & Service Platform",
+  "description": "Production-grade Mizoram-tailored service and errand platform with phone OTP auth, dynamic plugin architecture, hill-terrain dispatch, Mizo ṭawng bilingual support, and AI logic supervision.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
