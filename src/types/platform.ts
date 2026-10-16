@@ -24,6 +24,27 @@ export type ServiceCategory =
   | 'market_groceries' 
   | 'pharmacy';
 
+export interface GpsCoordinate {
+  lat: number;
+  lng: number;
+  name?: string;
+  nameMizo?: string;
+  elevationMeters?: number;
+  accuracyMeters?: number;
+}
+
+export interface PointToPointRoute {
+  origin: GpsCoordinate;
+  destination: GpsCoordinate;
+  straightDistanceKm: number;
+  roadDistanceKm: number;
+  elevationChangeMeters: number;
+  climbDirection: 'uphill' | 'downhill' | 'ridge_level';
+  averageGradientPercent: number;
+  estimatedTransitMinutes: number;
+  hillSteepnessFactor: number;
+}
+
 export interface MizoramLocality {
   id: string;
   name: string;
@@ -32,6 +53,8 @@ export interface MizoramLocality {
   elevationMeters: number;
   steepnessRating: 1 | 2 | 3 | 4 | 5; // 1 = flat ridge, 5 = extreme hill stair climb
   popularLandmarks: string[];
+  latitude: number;
+  longitude: number;
 }
 
 export interface PlatformModule {
@@ -79,6 +102,9 @@ export interface TaskRecord {
   clientName: string;
   pickupLocalityId: string;
   dropLocalityId: string;
+  pickupGps?: GpsCoordinate;
+  dropGps?: GpsCoordinate;
+  gpsRoute?: PointToPointRoute;
   hillDifficulty: 1 | 2 | 3 | 4 | 5;
   stairStepsCount: number;
   baseFee: number;

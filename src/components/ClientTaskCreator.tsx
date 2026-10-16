@@ -11,15 +11,25 @@ import {
   Star, 
   ShieldCheck,
   Send,
-  Loader2
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  Compass,
+  Crosshair,
+  Navigation
 } from 'lucide-react';
 import { MIZORAM_LOCALITIES } from '../utils/mizoramData.ts';
 import { calculateHillTerrainFare } from '../utils/pricingEngine.ts';
+import { findNearestLocality } from '../utils/gpsEngine.ts';
+import { PointToPointGpsMap } from './PointToPointGpsMap.tsx';
+import { Rupee } from './CurrencySymbol.tsx';
 import type { 
   PlatformModule, 
   ServiceCategory, 
   TaskRecord, 
-  WorkerProfile 
+  WorkerProfile,
+  GpsCoordinate,
+  PointToPointRoute
 } from '../types/platform.ts';
 
 interface ClientTaskCreatorProps {
@@ -53,12 +63,25 @@ export const ClientTaskCreator: React.FC<ClientTaskCreatorProps> = ({
   // Form Fields
   const [pickupLocalityId, setPickupLocalityId] = useState('aiz_bara_bazar');
   const [dropLocalityId, setDropLocalityId] = useState('aiz_zarkawt');
-  const [stairSteps, setStairSteps] = useState(40);
+  const [stairSteps, setStairSteps] = useState(30);
   const [taskTitle, setTaskTitle] = useState('');
   const [taskTitleMizo, setTaskTitleMizo] = useState('');
   const [specialInstructions, setSpecialInstructions] = useState('');
+  const [showAdvancedNotes, setShowAdvancedNotes] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // GPS Point-to-Point State
+  const [showGpsMap, setShowGpsMap] = useState(false);
+  const [pickupGps, setPickupGps] = useState<GpsCoordinate>(() => {
+    const loc = MIZORAM_LOCALITIES[0];
+    return { lat: loc.latitude, lng: loc.longitude, name: loc.name, elevationMeters: loc.elevationMeters };
+  });
+  const [dropGps, setDropGps] = useState<GpsCoordinate>(() => {
+    const loc = MIZORAM_LOCALITIES[1];
+    return { lat: loc.latitude, lng: loc.longitude, name: loc.name, elevationMeters: loc.elevationMeters };
+  });
+  const [gpsRoute, setGpsRoute] = useState<PointToPointRoute | null>(null);
 
   const pickupLocality = useMemo(() => {
     return MIZORAM_LOCALITIES.find(l => l.id === pickupLocalityId) || MIZORAM_LOCALITIES[0];
@@ -67,6 +90,70 @@ export const ClientTaskCreator: React.FC<ClientTaskCreatorProps> = ({
   const dropLocality = useMemo(() => {
     return MIZORAM_LOCALITIES.find(l => l.id === dropLocalityId) || MIZORAM_LOCALITIES[1];
   }, [dropLocalityId]);
+
+  const [isLocatingDevice, setIsLocatingDevice] = useState(false);
+
+  const handleUseCurrentGps = () => {
+    if (!navigator.geolocation) {
+      setErrorMsg(isMizo ? 'I browser hian GPS a support lo.' : 'GPS not supported by browser.');
+      return;
+    }
+    setIsLocatingDevice(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setIsLocatingDevice(false);
+        const { latitude, longitude, altitude, accuracy } = pos.coords;
+        const nearest = findNearestLocality(latitude, longitude, MIZORAM_LOCALITIES);
+        const coord: GpsCoordinate = {
+          lat: Math.round(latitude * 10000) / 10000,
+          lng: Math.round(longitude * 10000) / 10000,
+          name: `${nearest.locality.name} (${isMizo ? 'Ka Awmna GPS' : 'My GPS'})`,
+          elevationMeters: altitude ? Math.round(altitude) : nearest.locality.elevationMeters,
+          accuracyMeters: Math.round(accuracy),
+        };
+        setPickupGps(coord);
+        setPickupLocalityId(nearest.locality.id);
+      },
+      () => {
+        setIsLocatingDevice(false);
+        const def = MIZORAM_LOCALITIES[0];
+        setPickupGps({ lat: def.latitude, lng: def.longitude, name: `${def.name} (GPS Default)`, elevationMeters: def.elevationMeters });
+      },
+      { enableHighAccuracy: true, timeout: 6000 }
+    );
+  };
+
+  const handlePickupChange = (locId: string) => {
+    setPickupLocalityId(locId);
+    const loc = MIZORAM_LOCALITIES.find(l => l.id === locId);
+    if (loc) {
+      setPickupGps({ lat: loc.latitude, lng: loc.longitude, name: loc.name, elevationMeters: loc.elevationMeters });
+    }
+  };
+
+  const handleDropChange = (locId: string) => {
+    setDropLocalityId(locId);
+    const loc = MIZORAM_LOCALITIES.find(l => l.id === locId);
+    if (loc) {
+      setDropGps({ lat: loc.latitude, lng: loc.longitude, name: loc.name, elevationMeters: loc.elevationMeters });
+    }
+  };
+
+  const handleGpsRouteSelected = (route: PointToPointRoute) => {
+    setGpsRoute(route);
+    setPickupGps(route.origin);
+    setDropGps(route.destination);
+    
+    // Find closest locality to keep select dropdowns synced
+    const nearestP = findNearestLocality(route.origin.lat, route.origin.lng, MIZORAM_LOCALITIES);
+    const nearestD = findNearestLocality(route.destination.lat, route.destination.lng, MIZORAM_LOCALITIES);
+    if (nearestP.locality.id !== pickupLocalityId) {
+      setPickupLocalityId(nearestP.locality.id);
+    }
+    if (nearestD.locality.id !== dropLocalityId) {
+      setDropLocalityId(nearestD.locality.id);
+    }
+  };
 
   // Real-time pure hill pricing breakdown
   const fareBreakdown = useMemo(() => {
@@ -78,7 +165,6 @@ export const ClientTaskCreator: React.FC<ClientTaskCreatorProps> = ({
     return workers
       .filter(w => w.isOnline && w.verified && w.activeCategories.includes(activeModule.category))
       .sort((a, b) => {
-        // Boost worker in same locality
         const aBoost = a.currentLocalityId === pickupLocalityId ? 10 : 0;
         const bBoost = b.currentLocalityId === pickupLocalityId ? 10 : 0;
         return (b.rating + bBoost) - (a.rating + aBoost);
@@ -141,6 +227,9 @@ export const ClientTaskCreator: React.FC<ClientTaskCreatorProps> = ({
           clientName,
           pickupLocalityId,
           dropLocalityId,
+          pickupGps,
+          dropGps,
+          gpsRoute,
           stairStepsCount: stairSteps,
           notes: specialInstructions,
         }),
@@ -165,307 +254,243 @@ export const ClientTaskCreator: React.FC<ClientTaskCreatorProps> = ({
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl mb-8">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4 mb-5">
+    <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs mb-4">
+      {/* Header with Title & Calculated Fare */}
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3 mb-3">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-white">
-              {isMizo ? `Hna Siam: ${activeModule.nameMizo}` : `Post Task: ${activeModule.name}`}
-            </h2>
-            <span className="text-xs bg-emerald-950 text-emerald-400 font-medium px-2 py-0.5 rounded border border-emerald-800">
-              {isMizo ? 'Hnaiah Thawktu Zawnna' : 'Hill Optimized Dispatch'}
-            </span>
-          </div>
-          <p className="text-xs text-slate-400 mt-0.5">
-            {isMizo ? activeModule.descriptionMizo : activeModule.description}
-          </p>
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
+            {isMizo ? activeModule.nameMizo : activeModule.name}
+          </h2>
+          <span className="text-[11px] text-emerald-700 font-medium">
+            {isMizo ? 'Tlangram kalkawng & kailawn hisap tel a ni' : 'Hill dispatch with terrace stair fee'}
+          </span>
         </div>
 
-        <div className="text-right">
-          <div className="text-xs text-slate-400">{isMizo ? 'Chhut fel aman:' : 'Calculated Fare:'}</div>
-          <div className="text-2xl font-black text-emerald-400 font-mono">
-            <span className="currency-symbol">₹</span>{fareBreakdown.totalFee}
-          </div>
+        <div className="text-right bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100">
+          <span className="text-[10px] text-emerald-800 uppercase font-semibold block leading-none">
+            {isMizo ? 'Aman' : 'Fare'}
+          </span>
+          <span className="text-xl sm:text-2xl font-black text-emerald-700 font-mono leading-tight flex items-center justify-end">
+            <Rupee className="w-5 h-5 text-emerald-700 mr-0.5" />
+            <span>{fareBreakdown.totalFee}</span>
+          </span>
         </div>
       </div>
 
-      {/* AI Dispatcher & Logic Supervisor Prompt Box */}
-      <div className="mb-6 bg-slate-950/80 border border-indigo-900/40 rounded-xl p-4">
-        <div className="flex items-center gap-2 mb-2 text-indigo-300 text-xs font-semibold">
-          <Sparkles className="w-4 h-4 text-indigo-400 animate-spin-slow" />
-          <span>{isMizo ? 'AI Logic Supervisor: Ṭawngkam a hna hrilh (Mizo / English)' : 'AI Logic Supervisor & Prompt Auto-Fill:'}</span>
+      {/* AI Prompt Auto-fill Bar (Compact) */}
+      <div className="mb-3 bg-slate-50 border border-indigo-100 rounded-xl p-2.5">
+        <div className="flex items-center gap-1.5 text-indigo-900 text-xs font-bold mb-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+          <span>{isMizo ? 'AI Logic Supervisor (Tawngkam hmangin hrilh rawh)' : 'AI Auto-Fill (Voice / Mizo Text):'}</span>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex gap-1.5">
           <input
             type="text"
             value={aiPromptInput}
             onChange={(e) => setAiPromptInput(e.target.value)}
             placeholder={
               isMizo
-                ? 'Eg: Synod Hospital Durtlang aṭangin damdawi min va laksak la Zarkawt-ah min rawn pe rawh...'
-                : 'Eg: Pick up heavy medical test report from Synod Durtlang and deliver to Zarkawt church...'
+                ? 'Eg: Durtlang Synod atangin damdawi Zarkawt-ah min laksak rawh...'
+                : 'Eg: Pickup medicine from Synod Durtlang to Zarkawt church...'
             }
-            className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
           />
           <button
             type="button"
             onClick={handleAnalyzePrompt}
             disabled={isAiAnalyzing || !aiPromptInput.trim()}
-            className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium text-xs px-4 py-2 rounded-xl transition flex items-center justify-center gap-1.5 shrink-0"
+            className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 shrink-0 shadow-2xs"
           >
             {isAiAnalyzing ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>{isMizo ? 'Hisap mek...' : 'Analyzing...'}</span>
-              </>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <>
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{isMizo ? 'AI hmanga hisap' : 'Auto-Fill with AI'}</span>
-              </>
+              <Sparkles className="w-3.5 h-3.5" />
             )}
+            <span className="hidden sm:inline">{isMizo ? 'AI Hisap' : 'AI Fill'}</span>
           </button>
         </div>
 
-        {/* AI Explanation feedback if available */}
         {aiAnalysisResult && (
-          <div className="mt-3 p-2.5 bg-indigo-950/40 border border-indigo-800/40 rounded-lg text-xs text-indigo-200 flex items-start gap-2">
-            <Info className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
-            <div>
-              <div className="font-semibold text-white">
-                {isMizo ? aiAnalysisResult.explanationMizo : aiAnalysisResult.explanationEn}
-              </div>
-              <div className="text-[11px] text-indigo-300 mt-1 flex flex-wrap gap-2">
-                <span>⏱ ~{aiAnalysisResult.estimatedMinutes} mins</span>
-                <span>🏔 Hill Index: {aiAnalysisResult.hillDifficultyIndex}/5</span>
-                <span>👷 Suggested: {aiAnalysisResult.suggestedWorkerType}</span>
-              </div>
+          <div className="mt-2 p-2 bg-indigo-50/80 border border-indigo-100 rounded-lg text-xs text-indigo-950 flex items-start gap-1.5">
+            <Info className="w-3.5 h-3.5 text-indigo-600 shrink-0 mt-0.5" />
+            <div className="text-[11px] leading-snug">
+              <span className="font-semibold">{isMizo ? aiAnalysisResult.explanationMizo : aiAnalysisResult.explanationEn}</span>
+              <span className="text-indigo-700 block mt-0.5">
+                ⏱ ~{aiAnalysisResult.estimatedMinutes} mins • Hill: {aiAnalysisResult.hillDifficultyIndex}/5
+              </span>
             </div>
           </div>
         )}
       </div>
 
       {errorMsg && (
-        <div className="mb-4 p-3 bg-red-950/50 border border-red-800 rounded-xl text-red-300 text-xs">
+        <div className="mb-3 p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs">
           {errorMsg}
         </div>
       )}
 
       {/* Main Task Form */}
-      <form onSubmit={handleCreateTask} className="space-y-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Pickup Locality */}
+      <form onSubmit={handleCreateTask} className="space-y-3">
+        {/* Point-to-Point GPS Routing Toolbar */}
+        <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-2 sm:p-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <Compass className="w-4 h-4 text-emerald-700" />
+              <div>
+                <span className="font-bold text-slate-900 text-xs">
+                  {isMizo ? 'Point-to-Point GPS Hman' : 'Point-to-Point GPS Routing'}
+                </span>
+                <span className="text-[10px] text-emerald-800 ml-1.5 hidden sm:inline font-mono">
+                  {gpsRoute ? `${gpsRoute.roadDistanceKm} km • ${gpsRoute.elevationChangeMeters > 0 ? '+' : ''}${gpsRoute.elevationChangeMeters}m` : 'Live Coordinates'}
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowGpsMap(!showGpsMap)}
+              className="bg-white hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2.5 py-1 rounded-lg border border-emerald-300 transition flex items-center gap-1 shadow-2xs"
+            >
+              <Navigation className="w-3 h-3 text-emerald-600" />
+              <span>{showGpsMap ? (isMizo ? 'Map Thup' : 'Hide Map') : (isMizo ? 'Point A & B Map-ah Thlang Rawh' : 'Select on GPS Map')}</span>
+              {showGpsMap ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </button>
+          </div>
+
+          {/* Embedded Point-to-Point GPS Map */}
+          {showGpsMap && (
+            <div className="mt-2.5 pt-2 border-t border-emerald-200/60 animate-fadeIn">
+              <PointToPointGpsMap
+                language={language}
+                originGps={pickupGps}
+                destGps={dropGps}
+                onSelectRoute={handleGpsRouteSelected}
+                compact={true}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Pickup & Drop Localities in 2 Columns */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-                <span>{isMizo ? 'Lakna Hmun (Pickup Locality)' : 'Pickup Locality'}</span>
+            <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-emerald-600" />
+                <span>{isMizo ? 'Lakna (Pickup)' : 'Pickup Locality'}</span>
               </span>
-              <span className="font-mono text-slate-400 text-[11px]">
-                {pickupLocality.elevationMeters}m ASL
-              </span>
+              <span className="font-mono text-slate-500 font-normal">{pickupLocality.elevationMeters}m • {pickupGps.lat.toFixed(3)}°N</span>
             </label>
             <select
               value={pickupLocalityId}
-              onChange={(e) => setPickupLocalityId(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              onChange={(e) => handlePickupChange(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
             >
               {MIZORAM_LOCALITIES.map((loc) => (
                 <option key={loc.id} value={loc.id}>
-                  {loc.name} ({loc.district}) • {loc.elevationMeters}m [Steepness {loc.steepnessRating}/5]
+                  {loc.name} ({loc.district}) • {loc.elevationMeters}m
                 </option>
               ))}
             </select>
-            <p className="text-[11px] text-slate-500 mt-1">
-              Landmarks: {pickupLocality.popularLandmarks.slice(0, 2).join(', ')}
-            </p>
           </div>
 
-          {/* Drop Locality */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-amber-400" />
-                <span>{isMizo ? 'Dahna Hmun (Drop / Delivery Locality)' : 'Drop / Delivery Locality'}</span>
+            <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-amber-600" />
+                <span>{isMizo ? 'Dahna (Destination)' : 'Drop Locality'}</span>
               </span>
-              <span className="font-mono text-slate-400 text-[11px]">
-                {dropLocality.elevationMeters}m ASL
-              </span>
+              <span className="font-mono text-slate-500 font-normal">{dropLocality.elevationMeters}m • {dropGps.lat.toFixed(3)}°N</span>
             </label>
             <select
               value={dropLocalityId}
-              onChange={(e) => setDropLocalityId(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              onChange={(e) => handleDropChange(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
             >
               {MIZORAM_LOCALITIES.map((loc) => (
                 <option key={loc.id} value={loc.id}>
-                  {loc.name} ({loc.district}) • {loc.elevationMeters}m [Steepness {loc.steepnessRating}/5]
+                  {loc.name} ({loc.district}) • {loc.elevationMeters}m
                 </option>
               ))}
             </select>
-            <p className="text-[11px] text-slate-500 mt-1">
-              Landmarks: {dropLocality.popularLandmarks.slice(0, 2).join(', ')}
-            </p>
           </div>
         </div>
 
-        {/* Steep Cliff Stair Climbing Slider */}
-        <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-semibold text-slate-200 flex items-center gap-2">
-              <Footprints className="w-4 h-4 text-emerald-400" />
-              <span>
-                {isMizo 
-                  ? 'Kailawn / Concrete Step Chhoh / Zuk Zawh Tur Zat' 
-                  : 'Cliff Stairs / Concrete Steps to House (Both Directions)'}
-              </span>
-            </label>
-            <span className="font-mono text-emerald-400 font-bold text-xs bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
-              {stairSteps} steps (+<span className="currency-symbol">₹</span>{fareBreakdown.stairFee})
+        {/* Compact Stair Steps Slider */}
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 sm:p-3">
+          <div className="flex items-center justify-between mb-1 text-xs">
+            <span className="font-bold text-slate-800 flex items-center gap-1.5 text-[11px] sm:text-xs">
+              <Footprints className="w-3.5 h-3.5 text-emerald-600" />
+              <span>{isMizo ? 'Kailawn Step Zat (Stairs)' : 'Cliff / Terrace Stairs to House'}</span>
+            </span>
+            <span className="font-mono text-emerald-800 font-bold text-xs bg-emerald-100/70 px-2 py-0.5 rounded border border-emerald-200 flex items-center">
+              <span>{stairSteps} steps (+</span><Rupee className="w-2.5 h-2.5 mx-0.5 text-emerald-800" /><span>{fareBreakdown.stairFee})</span>
             </span>
           </div>
 
           <input
             type="range"
             min="0"
-            max="200"
+            max="180"
             step="10"
             value={stairSteps}
             onChange={(e) => setStairSteps(parseInt(e.target.value, 10))}
-            className="w-full accent-emerald-500 cursor-pointer"
-          />
-          <div className="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
-            <span>0 steps (Road level)</span>
-            <span>50 steps (Average Aizawl slope)</span>
-            <span>120 steps (Deep terrace cliff)</span>
-            <span>200 steps (Extreme valley)</span>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-2">
-            {isMizo
-              ? 'Mizoram-ah chuan in tam tak hi motor kawngpui aṭanga kailawn thui tak chhuk/chhoh a ngaih avangin thawktu te tan rawngbawlna man bituk a ni.'
-              : 'Fair compensation algorithm: In Aizawl hills, houses are built on steep ridges requiring steep stair climbing with loads.'}
-          </p>
-        </div>
-
-        {/* Title & Instructions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
-              {isMizo ? 'Hna Hming / Title (English)' : 'Task Description / Title'}
-            </label>
-            <input
-              type="text"
-              value={taskTitle}
-              onChange={(e) => setTaskTitle(e.target.value)}
-              placeholder="e.g. Urgent prescription pickup at Synod Hospital"
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
-              {isMizo ? 'Mizo ṭawng a chianna' : 'Mizo Language Summary'}
-            </label>
-            <input
-              type="text"
-              value={taskTitleMizo}
-              onChange={(e) => setTaskTitleMizo(e.target.value)}
-              placeholder="e.g. Synod Hospital aṭangin damdawi lak"
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1">
-            {isMizo ? 'Thawktu Hriattur Pawimawh (Notes)' : 'Special Instructions & Landmark Notes'}
-          </label>
-          <textarea
-            rows={2}
-            value={specialInstructions}
-            onChange={(e) => setSpecialInstructions(e.target.value)}
-            placeholder={
-              isMizo
-                ? 'Biak In kawtah min lo nghak rawh, kawng kual a step phei hmasa ber kha...'
-                : 'Meet near Presbyterian church gate, blue gate with water tank...'
-            }
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full accent-emerald-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg"
           />
         </div>
 
-        {/* Transparent Cost Breakdown Card */}
-        <div className="bg-slate-950 border border-slate-800 rounded-xl p-4">
-          <div className="text-xs font-semibold text-slate-300 mb-3 flex items-center justify-between">
-            <span className="flex items-center gap-1.5">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{isMizo ? 'Aman Chhutna Dik Tak (Transparent Pricing):' : 'Transparent Hill Fare Breakdown:'}</span>
-            </span>
-            <span className="text-[11px] text-slate-400 font-mono">
-              Δ {fareBreakdown.elevationDeltaMeters}m Elevation
-            </span>
+        {/* Transparent Fare Summary Pills (Compact) */}
+        <div className="grid grid-cols-4 gap-1.5 text-center text-[10px] sm:text-xs">
+          <div className="p-1.5 rounded-lg bg-slate-50 border border-slate-200">
+            <div className="text-slate-500">{isMizo ? 'Bultanna' : 'Base'}</div>
+            <div className="font-mono font-bold text-slate-900 flex items-center justify-center">
+              <Rupee className="w-2.5 h-2.5 text-slate-800" />
+              <span>{fareBreakdown.baseFee}</span>
+            </div>
           </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-              <div className="text-slate-400 text-[11px]">{isMizo ? 'Bulṭanna' : 'Base Fare'}</div>
-              <div className="font-mono font-bold text-white text-sm"><span className="currency-symbol">₹</span>{fareBreakdown.baseFee}</div>
+          <div className="p-1.5 rounded-lg bg-slate-50 border border-slate-200">
+            <div className="text-slate-500">{isMizo ? 'Kawng' : 'Dist'}</div>
+            <div className="font-mono font-bold text-slate-900 flex items-center justify-center">
+              <Rupee className="w-2.5 h-2.5 text-slate-800" />
+              <span>{fareBreakdown.distanceFee}</span>
             </div>
-
-            <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-              <div className="text-slate-400 text-[11px]">{isMizo ? 'Hlat Zawng' : 'Distance (~' + fareBreakdown.estimatedKm + 'km)'}</div>
-              <div className="font-mono font-bold text-white text-sm"><span className="currency-symbol">₹</span>{fareBreakdown.distanceFee}</div>
+          </div>
+          <div className="p-1.5 rounded-lg bg-slate-50 border border-slate-200">
+            <div className="text-slate-500">{isMizo ? 'Tlangram' : 'Hill'}</div>
+            <div className="font-mono font-bold text-amber-700 flex items-center justify-center">
+              <span>+</span><Rupee className="w-2.5 h-2.5 text-amber-700" />
+              <span>{fareBreakdown.hillSurcharge}</span>
             </div>
-
-            <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-              <div className="text-slate-400 text-[11px]">{isMizo ? 'Tlangram Harsa' : 'Hill Steepness Surcharge'}</div>
-              <div className="font-mono font-bold text-amber-400 text-sm">+<span className="currency-symbol">₹</span>{fareBreakdown.hillSurcharge}</div>
-            </div>
-
-            <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-              <div className="text-slate-400 text-[11px]">{isMizo ? 'Kailawn Chhoh' : 'Stair Climbing Fee'}</div>
-              <div className="font-mono font-bold text-emerald-400 text-sm">+<span className="currency-symbol">₹</span>{fareBreakdown.stairFee}</div>
+          </div>
+          <div className="p-1.5 rounded-lg bg-slate-50 border border-slate-200">
+            <div className="text-slate-500">{isMizo ? 'Kailawn' : 'Stairs'}</div>
+            <div className="font-mono font-bold text-emerald-700 flex items-center justify-center">
+              <span>+</span><Rupee className="w-2.5 h-2.5 text-emerald-700" />
+              <span>{fareBreakdown.stairFee}</span>
             </div>
           </div>
         </div>
 
-        {/* Live Eligible Workers in locality */}
+        {/* Collapsible Advanced Landmark / Notes option */}
         <div>
-          <div className="text-xs font-semibold text-slate-300 mb-2 flex items-center justify-between">
-            <span>
-              {isMizo ? 'Hnaia Thawktu Inpeih Te (Nearest Verified Workers):' : 'Available Field Workers Nearby:'}
-            </span>
-            <span className="text-[11px] text-emerald-400">
-              {eligibleWorkers.length} {isMizo ? 'inpeih mek' : 'online now'}
-            </span>
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowAdvancedNotes(!showAdvancedNotes)}
+            className="text-[11px] text-slate-500 hover:text-slate-800 font-semibold flex items-center gap-1 transition"
+          >
+            <span>{showAdvancedNotes ? (isMizo ? 'Note khar rawh' : 'Hide Notes') : (isMizo ? '+ Note / Landmark dahna' : '+ Add Special Landmark Notes')}</span>
+            {showAdvancedNotes ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          </button>
 
-          {eligibleWorkers.length === 0 ? (
-            <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-400 text-center">
-              {isMizo ? 'Tunah hian he category a thawktu an la inpeih lo.' : 'No verified workers currently active in this category.'}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-              {eligibleWorkers.slice(0, 3).map((w) => (
-                <div key={w.id} className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold text-white flex items-center gap-1">
-                      <span>{w.name}</span>
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                    </div>
-                    <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
-                      <span className="flex items-center text-amber-400">
-                        <Star className="w-3 h-3 fill-amber-400 mr-0.5" />
-                        {w.rating}
-                      </span>
-                      <span>• {w.completedTasks} jobs</span>
-                    </div>
-                  </div>
-                  <span className="font-mono text-[10px] text-emerald-400 bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-800">
-                    {w.currentLocalityId === pickupLocalityId ? 'Local' : 'Near'}
-                  </span>
-                </div>
-              ))}
+          {showAdvancedNotes && (
+            <div className="mt-2 space-y-2 animate-fadeIn">
+              <input
+                type="text"
+                value={specialInstructions}
+                onChange={(e) => setSpecialInstructions(e.target.value)}
+                placeholder={isMizo ? 'Biak in bul, gate pawl kawtah...' : 'Presbyterian church gate, blue gate...'}
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              />
             </div>
           )}
         </div>
@@ -474,20 +499,22 @@ export const ClientTaskCreator: React.FC<ClientTaskCreatorProps> = ({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-3 px-5 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-xl shadow-emerald-900/30"
+          className="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold py-2.5 px-4 rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-sm"
         >
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span>{isMizo ? 'Hna chhawr mek...' : 'Broadcasting Task...'}</span>
+              <span>{isMizo ? 'Hna siam mek...' : 'Broadcasting...'}</span>
             </>
           ) : (
             <>
               <Send className="w-4 h-4" />
-              <span>
-                {isMizo 
-                  ? `Hna Siam Fel Rawh (₹${fareBreakdown.totalFee})` 
-                  : `Confirm & Broadcast Errand (₹${fareBreakdown.totalFee})`}
+              <span className="flex items-center gap-1">
+                {isMizo ? (
+                  <>Hna Siam Fel Rawh (<Rupee className="w-3 h-3 text-white" />{fareBreakdown.totalFee})</>
+                ) : (
+                  <>Confirm &amp; Broadcast Errand (<Rupee className="w-3 h-3 text-white" />{fareBreakdown.totalFee})</>
+                )}
               </span>
             </>
           )}

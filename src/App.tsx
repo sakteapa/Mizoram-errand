@@ -9,6 +9,7 @@ import { PhoneOtpModal } from './components/PhoneOtpModal.tsx';
 import { ArchitectureModal } from './components/ArchitectureModal.tsx';
 import { LowConnectivityBanner } from './components/LowConnectivityBanner.tsx';
 import { INITIAL_MODULES, INITIAL_WORKERS } from './utils/mizoramData.ts';
+import { User, Briefcase, Sliders, PlusCircle, ListChecks } from 'lucide-react';
 import type { 
   PlatformModule, 
   ServiceCategory, 
@@ -18,11 +19,14 @@ import type {
 } from './types/platform.ts';
 
 export default function App() {
-  const [language, setLanguage] = useState<'en' | 'mizo'>('en');
+  const [language, setLanguage] = useState<'en' | 'mizo'>('mizo'); // Default to Mizo as requested in brief
   const [activeTab, setActiveTab] = useState<'client' | 'worker' | 'admin' | 'supervisor'>('client');
   const [activeRole, setActiveRole] = useState<UserRole>('client');
   const [userPhone, setUserPhone] = useState<string>('+919862112233');
   const [userName, setUserName] = useState<string>('Lalawmpuii (Awmi)');
+
+  // Client view sub-toggle to avoid scrolling: New Task vs Active Tracking
+  const [clientViewMode, setClientViewMode] = useState<'create' | 'track'>('create');
 
   const [modules, setModules] = useState<PlatformModule[]>(INITIAL_MODULES);
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory>('errand');
@@ -97,6 +101,7 @@ export default function App() {
   // Task created handler
   const handleTaskCreated = (newTask: TaskRecord) => {
     setTasks(prev => [newTask, ...prev]);
+    setClientViewMode('track'); // Auto-switch to tracking view without scrolling!
   };
 
   // Task status transition handler (strict state machine)
@@ -204,8 +209,8 @@ export default function App() {
   const isMizo = language === 'mizo';
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
-      {/* Platform Header */}
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-emerald-600 selection:text-white pb-16 sm:pb-0">
+      {/* Platform Header (Light Theme) */}
       <Header
         language={language}
         setLanguage={setLanguage}
@@ -221,47 +226,95 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
-        {/* Low connectivity banner & offline SMS simulator */}
-        <LowConnectivityBanner language={language} />
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-2 sm:py-4">
+        {/* Compact low-connectivity offline alert (Shown on client and worker tabs) */}
+        {activeTab !== 'admin' && <LowConnectivityBanner language={language} />}
 
-        {/* Dynamic Plugin Module Ribbon */}
-        <DynamicPluginBar
-          modules={modules}
-          selectedCategory={selectedCategory}
-          onSelectCategory={(cat) => setSelectedCategory(cat)}
-          language={language}
-          onManagePluginsClick={() => {
-            setActiveTab('admin');
-            setActiveRole('super_admin');
-          }}
-        />
-
-        {/* Dynamic Views by Tab */}
+        {/* Dynamic Plugin Module Ribbon (Shown for client errand creation) */}
         {activeTab === 'client' && (
-          <div className="space-y-6">
-            {/* Errand / Task Creation Wizard */}
-            <ClientTaskCreator
-              activeModule={activeModule}
-              availableModules={modules.filter(m => m.enabled)}
-              workers={workers}
-              language={language}
-              clientPhone={userPhone}
-              clientName={userName}
-              onTaskCreated={handleTaskCreated}
-              onSelectCategory={(cat) => setSelectedCategory(cat)}
-            />
+          <DynamicPluginBar
+            modules={modules}
+            selectedCategory={selectedCategory}
+            onSelectCategory={(cat) => {
+              setSelectedCategory(cat);
+              setClientViewMode('create');
+            }}
+            language={language}
+            onManagePluginsClick={() => {
+              setActiveTab('admin');
+              setActiveRole('super_admin');
+            }}
+          />
+        )}
 
-            {/* Live Task Feed & State Machine Stepper */}
-            <TaskTracker
-              tasks={tasks}
-              language={language}
-              onRefresh={fetchData}
-              onCancelTask={handleCancelTask}
-            />
+        {/* Client Portal View with Sub-Navigation to Prevent Scrolling */}
+        {activeTab === 'client' && (
+          <div className="space-y-4">
+            {/* Quick Segmented Switcher (New Errand vs Active Tracking) */}
+            <div className="flex items-center justify-between bg-white border border-slate-200 p-1.5 rounded-2xl shadow-2xs">
+              <div className="flex items-center gap-1 w-full sm:w-auto">
+                <button
+                  onClick={() => setClientViewMode('create')}
+                  className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition ${
+                    clientViewMode === 'create'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  <span>{isMizo ? 'Hna Siam Thar' : 'New Task'}</span>
+                </button>
+
+                <button
+                  onClick={() => setClientViewMode('track')}
+                  className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition ${
+                    clientViewMode === 'track'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
+                >
+                  <ListChecks className="w-4 h-4" />
+                  <span>{isMizo ? 'Hna Chelh Lai' : 'Active Errands'}</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    clientViewMode === 'track' ? 'bg-white text-emerald-800' : 'bg-slate-200 text-slate-700'
+                  }`}>
+                    {tasks.length}
+                  </span>
+                </button>
+              </div>
+
+              <div className="hidden sm:block text-xs text-slate-500 font-medium pr-2">
+                {isMizo ? 'Aizawl tlangchhip tirhkah awlsam' : 'Quick Hill Dispatch in Aizawl'}
+              </div>
+            </div>
+
+            {/* View Mode: Task Creator */}
+            {clientViewMode === 'create' && (
+              <ClientTaskCreator
+                activeModule={activeModule}
+                availableModules={modules.filter(m => m.enabled)}
+                workers={workers}
+                language={language}
+                clientPhone={userPhone}
+                clientName={userName}
+                onTaskCreated={handleTaskCreated}
+                onSelectCategory={(cat) => setSelectedCategory(cat)}
+              />
+            )}
+
+            {/* View Mode: Task Tracker */}
+            {clientViewMode === 'track' && (
+              <TaskTracker
+                tasks={tasks}
+                language={language}
+                onRefresh={fetchData}
+                onCancelTask={handleCancelTask}
+              />
+            )}
           </div>
         )}
 
+        {/* Worker Portal View */}
         {activeTab === 'worker' && (
           <WorkerPortal
             tasks={tasks}
@@ -272,6 +325,7 @@ export default function App() {
           />
         )}
 
+        {/* Admin Control Center View */}
         {activeTab === 'admin' && (
           <AdminControlCenter
             modules={modules}
@@ -285,29 +339,69 @@ export default function App() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-6 text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-300">
+      {/* Footer (Light Theme) */}
+      <footer className="border-t border-slate-200 bg-white py-4 text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 font-medium">
+            <span className="font-bold text-slate-800">
               Mizoram Errand &amp; Service Platform
             </span>
             <span>•</span>
-            <span>Aizawl • Lunglei • Champhai • Kolasib • Serchhip</span>
+            <span>Aizawl • Lunglei • Champhai • Kolasib</span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setIsArchModalOpen(true)}
-              className="text-emerald-400 hover:text-emerald-300 underline"
+              className="text-emerald-700 hover:text-emerald-900 font-semibold underline"
             >
-              NestJS / Go / PostgreSQL Specification
+              NestJS / Go Architecture
             </button>
-            <span>•</span>
-            <span>Bilingual Mizo ṭawng &amp; English</span>
           </div>
         </div>
       </footer>
+
+      {/* Mobile-Friendly Sticky Bottom Navigation Bar */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white/95 border-t border-slate-200 backdrop-blur-md z-40 px-3 py-1.5 flex items-center justify-around shadow-lg">
+        <button
+          onClick={() => {
+            setActiveTab('client');
+            setActiveRole('client');
+          }}
+          className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
+            activeTab === 'client' ? 'text-emerald-700 font-bold' : 'text-slate-400 hover:text-slate-600'
+          }`}
+        >
+          <User className="w-5 h-5" />
+          <span className="text-[10px]">{isMizo ? 'Chhawrtu' : 'Client'}</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setActiveTab('worker');
+            setActiveRole('worker');
+          }}
+          className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
+            activeTab === 'worker' ? 'text-amber-700 font-bold' : 'text-slate-400 hover:text-slate-600'
+          }`}
+        >
+          <Briefcase className="w-5 h-5" />
+          <span className="text-[10px]">{isMizo ? 'Thawktu' : 'Worker'}</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setActiveTab('admin');
+            setActiveRole('super_admin');
+          }}
+          className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
+            activeTab === 'admin' ? 'text-indigo-700 font-bold' : 'text-slate-400 hover:text-slate-600'
+          }`}
+        >
+          <Sliders className="w-5 h-5" />
+          <span className="text-[10px]">{isMizo ? 'Admin' : 'Admin'}</span>
+        </button>
+      </div>
 
       {/* Phone OTP Auth Modal */}
       <PhoneOtpModal
@@ -325,7 +419,7 @@ export default function App() {
         }}
       />
 
-      {/* Architecture & Code Snippets Modal */}
+      {/* Architecture Modal */}
       <ArchitectureModal
         isOpen={isArchModalOpen}
         onClose={() => setIsArchModalOpen(false)}

@@ -43,63 +43,58 @@ export const Header: React.FC<HeaderProps> = ({
   const isMizo = language === 'mizo';
 
   return (
-    <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-40">
-      {/* Top micro bar for Mizoram locality info & low-connectivity fallback */}
-      <div className="bg-emerald-950/60 border-b border-emerald-800/40 px-4 py-1 text-xs flex flex-wrap items-center justify-between gap-2 text-emerald-300">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 font-medium">
-            <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Mizoram State Hub:</span>
-            <span className="text-white font-semibold">Aizawl (Ridge 920m ASL)</span>
-          </span>
-          <span className="hidden sm:inline text-emerald-600">|</span>
-          <span className="hidden sm:inline-flex items-center gap-1 text-emerald-300/80">
-            <Wifi className="w-3 h-3 text-emerald-400" />
-            {isMizo ? 'Offline SMS Token Hman Theih' : 'Low-Connectivity Offline Tokens Active'}
+    <header className="border-b border-slate-200 bg-white/95 backdrop-blur-md sticky top-0 z-40 shadow-xs">
+      {/* Top micro bar for Mizoram locality info & low-connectivity status */}
+      <div className="bg-emerald-50 border-b border-emerald-100 px-3 sm:px-6 py-1 text-[11px] sm:text-xs flex items-center justify-between text-emerald-800">
+        <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+          <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+          <span className="font-semibold text-emerald-950 truncate">Aizawl Hills (920m ASL)</span>
+          <span className="hidden md:inline text-emerald-300">•</span>
+          <span className="hidden md:inline-flex items-center gap-1 text-emerald-700">
+            <Wifi className="w-3 h-3 text-emerald-600" />
+            {isMizo ? 'Offline SMS Token Inpeih' : 'Low-Connectivity Offline Tokens Active'}
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-emerald-300/90 font-medium">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <span className="text-emerald-800 font-medium hidden sm:inline">
             {isMizo ? `Thawktu Inpeih: ${onlineWorkersCount}` : `Active Field Workers: ${onlineWorkersCount}`}
           </span>
           <button
             onClick={onOpenArchitecture}
-            className="text-xs bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 px-2 py-0.5 rounded border border-emerald-700/50 flex items-center gap-1 transition"
+            className="text-[11px] bg-white hover:bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded border border-emerald-200 font-medium flex items-center gap-1 transition shadow-2xs"
             title="Inspect Production Backend & DB Schema"
           >
-            <Code2 className="w-3 h-3" />
-            <span className="hidden md:inline">NestJS / Go / Postgres</span> Arch
+            <Code2 className="w-3 h-3 text-emerald-600" />
+            <span><strong className="hidden sm:inline">NestJS/Go </strong>Arch</span>
           </button>
         </div>
       </div>
 
       {/* Main navigation header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 sm:gap-4">
         {/* Brand */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 ring-1 ring-white/20">
-            <span className="font-extrabold text-white text-lg tracking-wider">MZ</span>
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-cyan-600 flex items-center justify-center shadow-md shadow-emerald-500/20 text-white font-extrabold text-sm sm:text-base tracking-wide">
+            MZ
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="font-bold text-lg text-white tracking-tight">
-                {isMizo ? 'Mizoram Tirhkah & Service' : 'Mizoram Errand & Service'}
+            <div className="flex items-center gap-1.5">
+              <h1 className="font-bold text-sm sm:text-base text-slate-900 tracking-tight leading-tight">
+                {isMizo ? 'Mizoram Tirhkah' : 'Mizoram Errand & Service'}
               </h1>
-              <span className="bg-emerald-500/20 text-emerald-400 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-emerald-500/30">
-                PROD v2.4
+              <span className="hidden sm:inline-block bg-emerald-100 text-emerald-800 text-[10px] font-bold px-1.5 py-0.5 rounded border border-emerald-200">
+                PROD
               </span>
             </div>
-            <p className="text-xs text-slate-400">
-              {isMizo 
-                ? 'Tlangram kawng kual & kailawn sang a rawngbawlna' 
-                : 'Hill Terrain Dispatch, OTP Auth & Dynamic Plugins'}
+            <p className="text-[11px] text-slate-500 hidden sm:block leading-none mt-0.5">
+              {isMizo ? 'Tlangram rawngbawlna & hill dispatch' : 'Hill Terrain Dispatch, OTP Auth & Dynamic Plugins'}
             </p>
           </div>
         </div>
 
-        {/* View mode navigation tabs */}
-        <div className="flex items-center bg-slate-950/70 p-1 rounded-xl border border-slate-800">
+        {/* View mode navigation tabs (Desktop / Tablet) */}
+        <div className="hidden sm:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
           <button
             onClick={() => {
               setActiveTab('client');
@@ -107,12 +102,12 @@ export const Header: React.FC<HeaderProps> = ({
             }}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
               activeTab === 'client'
-                ? 'bg-emerald-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-white text-emerald-700 shadow-xs border border-slate-200/80'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <User className="w-3.5 h-3.5" />
-            <span>{isMizo ? 'Chhawrtu (Client)' : 'Client Portal'}</span>
+            <User className="w-3.5 h-3.5 text-emerald-600" />
+            <span>{isMizo ? 'Chhawrtu' : 'Client Portal'}</span>
           </button>
 
           <button
@@ -122,12 +117,12 @@ export const Header: React.FC<HeaderProps> = ({
             }}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
               activeTab === 'worker'
-                ? 'bg-amber-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-white text-amber-700 shadow-xs border border-slate-200/80'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Briefcase className="w-3.5 h-3.5" />
-            <span>{isMizo ? 'Thawktu (Worker)' : 'Worker Duty'}</span>
+            <Briefcase className="w-3.5 h-3.5 text-amber-600" />
+            <span>{isMizo ? 'Thawktu' : 'Worker Duty'}</span>
           </button>
 
           <button
@@ -137,31 +132,31 @@ export const Header: React.FC<HeaderProps> = ({
             }}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
               activeTab === 'admin'
-                ? 'bg-indigo-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-white text-indigo-700 shadow-xs border border-slate-200/80'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Sliders className="w-3.5 h-3.5" />
-            <span>{isMizo ? 'Admin Control' : 'Admin & Plugins'}</span>
+            <Sliders className="w-3.5 h-3.5 text-indigo-600" />
+            <span>{isMizo ? 'Admin' : 'Admin & Analytics'}</span>
           </button>
         </div>
 
         {/* Right side controls: Language, Role Picker, User Phone */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Language Switcher */}
-          <div className="flex items-center bg-slate-800/80 rounded-lg p-0.5 border border-slate-700 text-xs">
+          <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200 text-xs">
             <button
               onClick={() => setLanguage('en')}
-              className={`px-2 py-1 rounded font-medium transition ${
-                language === 'en' ? 'bg-slate-700 text-emerald-400 font-bold' : 'text-slate-400'
+              className={`px-1.5 sm:px-2 py-1 rounded font-medium transition ${
+                language === 'en' ? 'bg-white text-emerald-700 font-bold shadow-2xs' : 'text-slate-500'
               }`}
             >
               EN
             </button>
             <button
               onClick={() => setLanguage('mizo')}
-              className={`px-2 py-1 rounded font-medium transition ${
-                language === 'mizo' ? 'bg-slate-700 text-emerald-400 font-bold' : 'text-slate-400'
+              className={`px-1.5 sm:px-2 py-1 rounded font-medium transition ${
+                language === 'mizo' ? 'bg-white text-emerald-700 font-bold shadow-2xs' : 'text-slate-500'
               }`}
             >
               MIZO
@@ -174,25 +169,25 @@ export const Header: React.FC<HeaderProps> = ({
               aria-label="Active Platform Role"
               value={activeRole}
               onChange={(e) => setActiveRole(e.target.value as UserRole)}
-              className="bg-slate-800 text-slate-200 text-xs font-medium py-1.5 pl-2.5 pr-7 rounded-lg border border-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer appearance-none"
+              className="bg-white text-slate-700 text-xs font-semibold py-1.5 pl-2 pr-6 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer appearance-none shadow-2xs"
             >
-              <option value="client">Role: Client / Chhawrtu</option>
-              <option value="worker">Role: Field Worker / Thawktu</option>
-              <option value="super_admin">Role: Super Admin (Hotu)</option>
-              <option value="system_admin">Role: System Admin</option>
-              <option value="moderator">Role: Moderator / KYC Staff</option>
+              <option value="client">Client (Chhawrtu)</option>
+              <option value="worker">Worker (Thawktu)</option>
+              <option value="super_admin">Super Admin</option>
+              <option value="system_admin">System Admin</option>
+              <option value="moderator">Moderator</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-1.5 pointer-events-none" />
           </div>
 
           {/* User Account / OTP Button */}
           <button
             onClick={onOpenAuth}
-            className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-1.5 rounded-lg border border-slate-700 transition"
+            className="flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1.5 rounded-lg border border-emerald-200 font-medium transition shadow-2xs"
           >
-            <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="font-mono text-emerald-300 font-medium">
-              {userPhone ? userPhone.slice(0, 3) + ' ' + userPhone.slice(3) : '+91 OTP'}
+            <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="font-mono text-emerald-950 font-bold text-[11px] hidden sm:inline">
+              {userPhone ? userPhone.slice(-4) : 'OTP'}
             </span>
           </button>
         </div>

@@ -105,155 +105,116 @@ export const PhoneOtpModal: React.FC<PhoneOtpModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-sm overflow-hidden shadow-xl relative">
         {/* Header */}
-        <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 p-5 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <Phone className="w-5 h-5" />
+        <div className="bg-gradient-to-r from-emerald-50 via-slate-50 to-white p-4 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+              <Phone className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">
-                {isMizo ? 'Phone Number OTP Luhna' : 'Phone Number OTP Login'}
+              <h2 className="text-sm font-bold text-slate-900">
+                {isMizo ? 'Phone OTP Luhna' : 'Phone Number OTP Auth'}
               </h2>
-              <p className="text-xs text-slate-400">
-                {isMizo ? 'Mizoram +91 number chauh hman theih a ni' : 'Strictly +91 Mizoram cellular authentication'}
+              <p className="text-[10px] text-slate-500">
+                Strictly +91 Mizoram numbers
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
             aria-label="Close modal"
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+            className="text-slate-400 hover:text-slate-800 p-1"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
-          {/* Quick presets */}
+        <div className="p-4 space-y-3">
+          {/* Presets */}
           <div>
-            <label className="text-xs font-semibold text-slate-300 mb-2 flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>{isMizo ? 'A rang lama luhna (Presets):' : 'Instant Test Credentials:'}</span>
+            <label className="text-[11px] font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-amber-500" />
+              <span>{isMizo ? 'A Rang Lama Luhna (Presets):' : 'Instant Test Presets:'}</span>
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1.5">
               {presets.map((p) => (
                 <button
                   key={p.phone}
                   type="button"
                   onClick={() => handleSelectPreset(p)}
-                  className={`text-left p-2 rounded-lg border text-xs transition ${
+                  className={`text-left p-1.5 rounded-lg border text-xs transition ${
                     phoneNumber === p.phone
-                      ? 'border-emerald-500 bg-emerald-950/40 text-emerald-300'
-                      : 'border-slate-800 bg-slate-950 hover:border-slate-700 text-slate-400'
+                      ? 'border-emerald-600 bg-emerald-50 text-emerald-950 font-bold'
+                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
-                  <div className="font-semibold truncate">{p.label}</div>
-                  <div className="font-mono text-[10px] text-slate-500">{p.phone}</div>
+                  <div className="text-[11px] truncate">{p.label.split(' ')[0]}</div>
+                  <div className="font-mono text-[9px] text-slate-500">{p.phone.slice(-4)}</div>
                 </button>
               ))}
             </div>
           </div>
 
           {errorMessage && (
-            <div className="p-3 bg-red-950/50 border border-red-800/50 rounded-xl text-red-300 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+            <div className="p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-xs flex items-center gap-1.5">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-600" />
               <span>{errorMessage}</span>
             </div>
           )}
 
           {successNotice && (
-            <div className="p-3 bg-emerald-950/50 border border-emerald-800/50 rounded-xl text-emerald-300 text-xs flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+            <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-xs flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
               <span>{successNotice}</span>
             </div>
           )}
 
           {step === 'phone' ? (
-            <form onSubmit={handleSendOtp} className="space-y-4">
+            <form onSubmit={handleSendOtp} className="space-y-2.5">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  {isMizo ? 'Phone Number (+91 Mizoram Mobile)' : 'Phone Number (+91 India / Mizoram)'}
+                <label className="block text-[11px] font-bold text-slate-700 mb-0.5">
+                  Phone Number (+91)
                 </label>
-                <div className="relative">
-                  <input
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="+919862345123"
-                    required
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white font-mono placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-                <p className="text-[11px] text-slate-500 mt-1">
-                  {isMizo 
-                    ? 'Email ngai lovin phone number hmangin him takin kan in register zel.' 
-                    : 'No email-first signup. Mobile number is bound to Aadhar/Voter ID for worker safety.'}
-                </p>
+                <input
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="+919862345123"
+                  required
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  {isMizo ? 'I hming (Full Name)' : 'Your Name'}
+                <label className="block text-[11px] font-bold text-slate-700 mb-0.5">
+                  {isMizo ? 'Hming' : 'Name'}
                 </label>
                 <input
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  {isMizo ? 'Luh tumna Role' : 'Intended Platform Role'}
-                </label>
-                <select
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value as UserRole)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                  <option value="client">Client / Chhawrtu (Job Poster)</option>
-                  <option value="worker">Worker / Hna Thawktu (Field Agent)</option>
-                  <option value="super_admin">Super Admin (System Owner)</option>
-                  <option value="system_admin">System Admin (Module Manager)</option>
-                  <option value="moderator">Moderator (KYC Staff)</option>
-                </select>
               </div>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-2xs"
               >
-                {isLoading ? (
-                  <span>{isMizo ? 'OTP thawn mek...' : 'Sending OTP...'}</span>
-                ) : (
-                  <>
-                    <span>{isMizo ? 'OTP Thawn Rawh' : 'Send One-Time Password'}</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
+                {isLoading ? 'Sending...' : (isMizo ? 'OTP Thawn Rawh' : 'Send OTP')}
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </form>
           ) : (
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
+            <form onSubmit={handleVerifyOtp} className="space-y-2.5">
               <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-xs font-medium text-slate-300">
-                    {isMizo ? 'Digit 6 OTP chhut luh tur' : 'Enter 6-Digit OTP'}
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setStep('phone')}
-                    className="text-xs text-emerald-400 hover:underline"
-                  >
-                    {isMizo ? 'Phone thlakna' : 'Change Phone'}
-                  </button>
-                </div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1 text-center">
+                  Enter 6-Digit OTP Code
+                </label>
                 <input
                   type="text"
                   maxLength={6}
@@ -261,34 +222,24 @@ export const PhoneOtpModal: React.FC<PhoneOtpModalProps> = ({
                   onChange={(e) => setOtpCode(e.target.value)}
                   placeholder="123456"
                   required
-                  className="w-full tracking-widest text-center bg-slate-950 border border-slate-800 rounded-xl py-3 text-xl font-mono text-emerald-400 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full tracking-widest text-center bg-slate-50 border border-slate-200 rounded-xl py-2 text-lg font-mono text-emerald-800 font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 />
               </div>
 
               {devOtpHint && (
-                <div className="p-3 bg-slate-950 border border-emerald-900/60 rounded-xl flex items-center justify-between text-xs">
-                  <span className="text-slate-400">
-                    {isMizo ? 'Preview Dev OTP:' : 'Evaluator Sandbox OTP:'}
-                  </span>
-                  <span className="font-mono text-emerald-400 font-bold text-sm bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
-                    {devOtpHint}
-                  </span>
+                <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-center text-xs text-emerald-900">
+                  <span>Dev OTP: </span>
+                  <span className="font-mono font-bold text-emerald-700">{devOtpHint}</span>
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-2xs"
               >
-                {isLoading ? (
-                  <span>{isMizo ? 'Fin fiah mek...' : 'Verifying...'}</span>
-                ) : (
-                  <>
-                    <Shield className="w-4 h-4" />
-                    <span>{isMizo ? 'OTP Finfiah & Lut Rawh' : 'Verify & Enter Platform'}</span>
-                  </>
-                )}
+                <Shield className="w-3.5 h-3.5" />
+                <span>{isMizo ? 'Finfiah & Lut Rawh' : 'Verify & Enter'}</span>
               </button>
             </form>
           )}

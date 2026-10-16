@@ -1,4 +1,3 @@
-import React from 'react';
 import { 
   Package, 
   Bike, 
@@ -11,6 +10,7 @@ import {
   CheckCircle2, 
   AlertTriangle 
 } from 'lucide-react';
+import { Rupee } from './CurrencySymbol.tsx';
 import type { PlatformModule, ServiceCategory } from '../types/platform.ts';
 
 interface DynamicPluginBarProps {
@@ -44,29 +44,29 @@ export const DynamicPluginBar: React.FC<DynamicPluginBarProps> = ({
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm mb-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-            {isMizo ? 'Dynamic Module & Rawngbawlna Plugins' : 'Dynamic Platform Modules & Plugins'}
+    <div className="bg-white border border-slate-200 rounded-2xl p-2.5 sm:p-3 shadow-xs mb-2.5 sm:mb-4">
+      <div className="flex items-center justify-between gap-2 mb-1.5 sm:mb-2">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <h2 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
+            {isMizo ? 'Rawngbawlna & Dynamic Plugins' : 'Active Service Modules'}
           </h2>
-          <span className="text-[11px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md border border-slate-700">
-            {modules.filter(m => m.enabled).length}/{modules.length} {isMizo ? 'Hman theih' : 'Active'}
+          <span className="text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded font-semibold border border-slate-200">
+            {modules.filter(m => m.enabled).length}/{modules.length}
           </span>
         </div>
 
         <button
           onClick={onManagePluginsClick}
-          className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 font-medium transition"
+          className="text-[11px] text-indigo-700 hover:text-indigo-900 flex items-center gap-1 font-semibold transition"
         >
-          <Sliders className="w-3.5 h-3.5" />
-          <span>{isMizo ? 'Server Plugin Rules Tihdanglam' : 'Configure Dynamic Rules'}</span>
+          <Sliders className="w-3 h-3 text-indigo-600" />
+          <span>{isMizo ? 'Rules' : 'Configure'}</span>
         </button>
       </div>
 
-      {/* Module Pill Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
+      {/* Swipeable on mobile with smooth snap, grid on desktop */}
+      <div className="flex sm:grid sm:grid-cols-4 md:grid-cols-7 gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar pb-0.5 -mx-0.5 px-0.5">
         {modules.map((mod) => {
           const isSelected = selectedCategory === mod.category;
           const isEnabled = mod.enabled;
@@ -80,39 +80,39 @@ export const DynamicPluginBar: React.FC<DynamicPluginBarProps> = ({
                 }
               }}
               disabled={!isEnabled}
-              className={`p-3 rounded-xl border text-left flex flex-col justify-between transition relative overflow-hidden group ${
+              className={`min-w-[125px] sm:min-w-0 p-2 rounded-xl border text-left flex flex-col justify-between transition shrink-0 ${
                 !isEnabled
-                  ? 'border-slate-800/60 bg-slate-950/40 opacity-50 cursor-not-allowed'
+                  ? 'border-slate-200 bg-slate-100/60 opacity-50 cursor-not-allowed text-slate-400'
                   : isSelected
-                  ? 'border-emerald-500 bg-emerald-950/30 text-white shadow-md ring-1 ring-emerald-500/30'
-                  : 'border-slate-800 bg-slate-950/80 hover:border-slate-700 text-slate-300'
+                  ? 'border-emerald-600 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-500/20 shadow-xs'
+                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 text-slate-700'
               }`}
             >
-              <div className="flex items-start justify-between mb-2">
-                <div className={`p-2 rounded-lg ${
-                  isSelected ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-emerald-400'
+              <div className="flex items-start justify-between mb-1.5">
+                <div className={`p-1.5 rounded-lg ${
+                  isSelected ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700'
                 }`}>
                   {getIcon(mod.iconName)}
                 </div>
 
                 {isEnabled ? (
-                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/60">
-                    {mod.hillMultiplier}x hill
+                  <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-100/80 px-1.5 py-0.5 rounded border border-emerald-200">
+                    {mod.hillMultiplier}x
                   </span>
                 ) : (
-                  <span className="text-[9px] font-semibold text-rose-400 bg-rose-950/80 px-1.5 py-0.5 rounded border border-rose-800/60 flex items-center gap-0.5">
-                    <AlertTriangle className="w-2.5 h-2.5" /> Disabled
+                  <span className="text-[9px] font-bold text-rose-700 bg-rose-50 px-1 py-0.5 rounded border border-rose-200">
+                    Off
                   </span>
                 )}
               </div>
 
               <div>
-                <h3 className="font-semibold text-xs leading-tight line-clamp-1">
+                <h3 className="font-bold text-xs leading-snug truncate text-slate-900">
                   {isMizo ? mod.nameMizo : mod.name}
                 </h3>
-                <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1 font-mono">
-                  <span>Base <span className="currency-symbol">₹</span>{mod.basePrice}</span>
-                  <span className="text-slate-500"><span className="currency-symbol">₹</span>{mod.perKmRate}/km</span>
+                <div className="flex items-center justify-between text-[10px] text-slate-500 mt-0.5 font-mono">
+                  <span className="flex items-center">Base <Rupee className="w-2.5 h-2.5 ml-0.5 text-slate-600" />{mod.basePrice}</span>
+                  <span className="flex items-center"><Rupee className="w-2.5 h-2.5 text-slate-600" />{mod.perKmRate}/km</span>
                 </div>
               </div>
             </button>

@@ -9,6 +9,8 @@ export const MIZORAM_LOCALITIES: MizoramLocality[] = [
     elevationMeters: 920,
     steepnessRating: 4,
     popularLandmarks: ['Millennium Centre', 'Bara Bazar Vegetable Market', 'City Bus Stand'],
+    latitude: 23.7335,
+    longitude: 92.7176,
   },
   {
     id: 'aiz_zarkawt',
@@ -18,6 +20,8 @@ export const MIZORAM_LOCALITIES: MizoramLocality[] = [
     elevationMeters: 960,
     steepnessRating: 3,
     popularLandmarks: ['Zarkawt Presbyterian Church', 'Civil Hospital Road junction', 'City Centre Mall'],
+    latitude: 23.7381,
+    longitude: 92.7188,
   },
   {
     id: 'aiz_chanmari',
@@ -27,6 +31,8 @@ export const MIZORAM_LOCALITIES: MizoramLocality[] = [
     elevationMeters: 940,
     steepnessRating: 3,
     popularLandmarks: ['Chanmari Presbyterian Church', 'Chanmari Kawn', 'Chaltlang Road corner'],
+    latitude: 23.7460,
+    longitude: 92.7225,
   },
   {
     id: 'aiz_khatla',
@@ -36,6 +42,8 @@ export const MIZORAM_LOCALITIES: MizoramLocality[] = [
     elevationMeters: 980,
     steepnessRating: 3,
     popularLandmarks: ['Secretariat complex', 'Khatla Kawn', 'Bungkawn link road'],
+    latitude: 23.7220,
+    longitude: 92.7160,
   },
   {
     id: 'aiz_kulikawn',
@@ -45,6 +53,8 @@ export const MIZORAM_LOCALITIES: MizoramLocality[] = [
     elevationMeters: 890,
     steepnessRating: 4,
     popularLandmarks: ['Kulikawn Hospital', 'Kulikawn Kawn', 'Mission Veng border'],
+    latitude: 23.7050,
+    longitude: 92.7230,
   },
   {
     id: 'aiz_bawngkawn',
@@ -54,6 +64,8 @@ export const MIZORAM_LOCALITIES: MizoramLocality[] = [
     elevationMeters: 850,
     steepnessRating: 3,
     popularLandmarks: ['Bawngkawn Kawn', 'Brigade point', 'Chaltlang junction'],
+    latitude: 23.7620,
+    longitude: 92.7350,
   },
   {
     id: 'aiz_durtlang',
@@ -63,6 +75,8 @@ export const MIZORAM_LOCALITIES: MizoramLocality[] = [
     elevationMeters: 1150,
     steepnessRating: 5,
     popularLandmarks: ['Synod Hospital Durtlang', 'Durtlang Hills Peak', 'Selesih turn'],
+    latitude: 23.7820,
+    longitude: 92.7410,
   },
   {
     id: 'aiz_mission_veng',
@@ -72,6 +86,8 @@ export const MIZORAM_LOCALITIES: MizoramLocality[] = [
     elevationMeters: 930,
     steepnessRating: 4,
     popularLandmarks: ['Mission Veng Church', 'Boys Home', 'Thakthing boundary'],
+    latitude: 23.7140,
+    longitude: 92.7250,
   },
   {
     id: 'aiz_luangmual',
@@ -81,6 +97,8 @@ export const MIZORAM_LOCALITIES: MizoramLocality[] = [
     elevationMeters: 780,
     steepnessRating: 4,
     popularLandmarks: ['Govt Complex', 'Doordarshan Kendra', 'Tanhril University link'],
+    latitude: 23.7390,
+    longitude: 92.6950,
   },
   {
     id: 'aiz_falkawn',
@@ -90,6 +108,8 @@ export const MIZORAM_LOCALITIES: MizoramLocality[] = [
     elevationMeters: 840,
     steepnessRating: 4,
     popularLandmarks: ['Zoram Medical College (ZMC)', 'State Cancer Institute'],
+    latitude: 23.6300,
+    longitude: 92.7300,
   },
   {
     id: 'lung_venglai',
@@ -99,6 +119,8 @@ export const MIZORAM_LOCALITIES: MizoramLocality[] = [
     elevationMeters: 722,
     steepnessRating: 4,
     popularLandmarks: ['Lunglei Bazar', 'Civil Hospital Lunglei', 'Convention Centre'],
+    latitude: 22.8885,
+    longitude: 92.7330,
   },
   {
     id: 'cham_vengthlang',
@@ -108,6 +130,8 @@ export const MIZORAM_LOCALITIES: MizoramLocality[] = [
     elevationMeters: 1678,
     steepnessRating: 2,
     popularLandmarks: ['Champhai Grape Winery', 'Champhai Bazar', 'Zokhawthar Road'],
+    latitude: 23.4750,
+    longitude: 93.3280,
   },
   {
     id: 'kol_diakkawn',
@@ -117,6 +141,8 @@ export const MIZORAM_LOCALITIES: MizoramLocality[] = [
     elevationMeters: 620,
     steepnessRating: 3,
     popularLandmarks: ['Diakkawn Bazar', 'NH 306 Entry point', 'Vengthar junction'],
+    latitude: 24.2250,
+    longitude: 92.6780,
   }
 ];
 
@@ -207,7 +233,7 @@ export const INITIAL_MODULES: PlatformModule[] = [
     nameMizo: 'Damdawi & Damdawiin Errand',
     category: 'pharmacy',
     description: 'Urgent prescription pickups from Civil Hospital, Synod, ZMC Falkawn',
-    descriptionMizo: 'Damdawi dawr leh damdawiin aṭanga rang taka damdawi lak',
+    descriptionMizo: 'Damdawi dawr leh damdawiin atanga rang taka damdawi lak',
     iconName: 'Cross',
     enabled: true,
     basePrice: 90,

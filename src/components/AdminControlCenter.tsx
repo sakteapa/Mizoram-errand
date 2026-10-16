@@ -15,6 +15,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { AdminAnalyticsDashboard } from './AdminAnalyticsDashboard.tsx';
+import { Rupee } from './CurrencySymbol.tsx';
 import type { PlatformModule, WorkerProfile, UserRole } from '../types/platform.ts';
 
 interface AdminControlCenterProps {
@@ -96,54 +97,54 @@ export const AdminControlCenter: React.FC<AdminControlCenterProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      {/* RBAC Header */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-              <Server className="w-6 h-6" />
+    <div className="space-y-4">
+      {/* RBAC Header (Light Theme) */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700">
+              <Server className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-white">
-                  {isMizo ? 'Admin & Dynamic Plugin Control' : 'Platform Administration & Logic Supervisor'}
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
+                  {isMizo ? 'Admin & Dynamic Plugin Control' : 'Platform Administration & Supervisor'}
                 </h2>
-                <span className="font-mono text-xs font-bold uppercase bg-indigo-950 text-indigo-300 px-2 py-0.5 rounded border border-indigo-800">
+                <span className="font-mono text-[10px] font-bold uppercase bg-indigo-100 text-indigo-800 px-1.5 py-0.2 rounded border border-indigo-200">
                   {userRole}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-[11px] text-slate-500 mt-0.5">
                 {isMizo 
                   ? 'Dynamic Modules, Thawktu KYC lehkha, leh AI Supervisor thurawn' 
-                  : 'Dynamic module lifecycle, worker KYC verification, and terrain AI audit'}
+                  : 'Dynamic plugin lifecycle, worker KYC verification, and terrain AI audit'}
               </p>
             </div>
           </div>
 
           {/* Sub Navigation */}
-          <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs overflow-x-auto no-scrollbar">
             <button
               onClick={() => setActiveSubTab('analytics')}
-              className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition ${
-                activeSubTab === 'analytics' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'
+              className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition shrink-0 ${
+                activeSubTab === 'analytics' ? 'bg-white text-indigo-700 shadow-2xs border border-slate-200/80' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{isMizo ? 'Revenue & District Trends' : 'Revenue & District Trends'}</span>
+              <BarChart3 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Revenue &amp; Trends</span>
             </button>
             <button
               onClick={() => setActiveSubTab('modules')}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition ${
-                activeSubTab === 'modules' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'
+              className={`px-3 py-1.5 rounded-lg font-bold transition shrink-0 ${
+                activeSubTab === 'modules' ? 'bg-white text-indigo-700 shadow-2xs border border-slate-200/80' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              {isMizo ? 'Plugin Modules' : 'Dynamic Modules'}
+              {isMizo ? 'Plugins' : 'Modules'}
             </button>
             <button
               onClick={() => setActiveSubTab('workers')}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition ${
-                activeSubTab === 'workers' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'
+              className={`px-3 py-1.5 rounded-lg font-bold transition shrink-0 ${
+                activeSubTab === 'workers' ? 'bg-white text-indigo-700 shadow-2xs border border-slate-200/80' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               {isMizo ? 'Thawktu KYC' : 'Worker KYC'}
@@ -153,11 +154,11 @@ export const AdminControlCenter: React.FC<AdminControlCenterProps> = ({
                 setActiveSubTab('supervisor');
                 if (!supervisorReport) handleRunAiAudit();
               }}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center gap-1 ${
-                activeSubTab === 'supervisor' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'
+              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1 shrink-0 ${
+                activeSubTab === 'supervisor' ? 'bg-white text-indigo-700 shadow-2xs border border-slate-200/80' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Sparkles className="w-3 h-3 text-amber-400" />
+              <Sparkles className="w-3 h-3 text-amber-500" />
               <span>AI Supervisor</span>
             </button>
           </div>
@@ -171,55 +172,52 @@ export const AdminControlCenter: React.FC<AdminControlCenterProps> = ({
 
       {/* SubTab 1: Dynamic Module / Plugin Manager */}
       {activeSubTab === 'modules' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
             <div>
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-emerald-400" />
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <Sliders className="w-4 h-4 text-emerald-600" />
                 <span>{isMizo ? 'Dynamic Modules / Plugins Dinhmun' : 'Dynamic Modules & Plugins Configuration'}</span>
               </h3>
-              <p className="text-xs text-slate-400">
-                {isMizo
-                  ? 'Server aṭangin hetiang plugin hi a tihtawp emaw chhawr theih a ni. Client app in a hriat nghal zel ang.'
-                  : 'Toggle modules on/off dynamically. Client applications adapt instantly based on server rules.'}
+              <p className="text-[11px] text-slate-500">
+                {isMizo ? 'Plugin enable / disable dan in client app a khawih nghal zel ang.' : 'Toggle modules on/off dynamically. Client apps adapt instantly.'}
               </p>
             </div>
 
             {!canEditModules && (
-              <span className="text-xs text-amber-400 bg-amber-950/60 px-2.5 py-1 rounded-lg border border-amber-800 flex items-center gap-1">
-                <Lock className="w-3 h-3" /> View Only (Requires Super Admin / System Admin)
+              <span className="text-[11px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200 flex items-center gap-1 font-semibold">
+                <Lock className="w-3 h-3" /> View Only (Super Admin required)
               </span>
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {modules.map((mod) => (
               <div
                 key={mod.id}
-                className={`p-4 rounded-xl border transition ${
+                className={`p-3.5 rounded-xl border transition ${
                   mod.enabled
-                    ? 'border-emerald-900/60 bg-slate-950'
-                    : 'border-slate-800 bg-slate-950/50 opacity-75'
+                    ? 'border-emerald-200 bg-emerald-50/30'
+                    : 'border-slate-200 bg-slate-50 opacity-70'
                 }`}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-white text-sm">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-slate-900 text-xs sm:text-sm">
                       {isMizo ? mod.nameMizo : mod.name}
                     </span>
-                    <span className="text-[10px] font-mono text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">
+                    <span className="text-[10px] font-mono text-slate-500 bg-white px-1.5 py-0.2 rounded border border-slate-200">
                       v{mod.version}
                     </span>
                   </div>
 
-                  {/* Toggle Button */}
                   <button
                     disabled={!canEditModules}
                     onClick={() => handleToggleModule(mod)}
-                    className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition flex items-center gap-1 ${
+                    className={`text-xs font-bold px-2.5 py-1 rounded-lg transition flex items-center gap-1 ${
                       mod.enabled
-                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                        : 'bg-slate-800 hover:bg-slate-700 text-slate-400'
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                        : 'bg-slate-200 hover:bg-slate-300 text-slate-700'
                     }`}
                   >
                     {mod.enabled ? (
@@ -236,23 +234,28 @@ export const AdminControlCenter: React.FC<AdminControlCenterProps> = ({
                   </button>
                 </div>
 
-                <p className="text-xs text-slate-400 mb-3">
+                <p className="text-[11px] text-slate-600 mb-2">
                   {isMizo ? mod.descriptionMizo : mod.description}
                 </p>
 
-                {/* Pricing Parameters */}
-                <div className="grid grid-cols-3 gap-2 text-xs bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+                <div className="grid grid-cols-3 gap-2 text-[11px] bg-white p-2 rounded-lg border border-slate-200">
                   <div>
-                    <span className="text-[10px] text-slate-500 block">Base Price</span>
-                    <span className="font-mono font-bold text-white"><span className="currency-symbol">₹</span>{mod.basePrice}</span>
+                    <span className="text-[10px] text-slate-400 block">Base</span>
+                    <span className="font-mono font-bold text-slate-900 flex items-center">
+                      <Rupee className="w-3 h-3 text-slate-800" />
+                      <span>{mod.basePrice}</span>
+                    </span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-500 block">Per Km</span>
-                    <span className="font-mono font-bold text-white"><span className="currency-symbol">₹</span>{mod.perKmRate}</span>
+                    <span className="text-[10px] text-slate-400 block">Per Km</span>
+                    <span className="font-mono font-bold text-slate-900 flex items-center">
+                      <Rupee className="w-3 h-3 text-slate-800" />
+                      <span>{mod.perKmRate}</span>
+                    </span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-500 block">Hill Multiplier</span>
-                    <span className="font-mono font-bold text-emerald-400">{mod.hillMultiplier}x</span>
+                    <span className="text-[10px] text-slate-400 block">Hill Mult.</span>
+                    <span className="font-mono font-bold text-emerald-700">{mod.hillMultiplier}x</span>
                   </div>
                 </div>
               </div>
@@ -263,57 +266,51 @@ export const AdminControlCenter: React.FC<AdminControlCenterProps> = ({
 
       {/* SubTab 2: Worker KYC Management */}
       {activeSubTab === 'workers' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <div>
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Users className="w-4 h-4 text-emerald-400" />
-                <span>{isMizo ? 'Hna Thawktu KYC & Lehkha Pawmna' : 'Worker KYC Verification Queue'}</span>
-              </h3>
-              <p className="text-xs text-slate-400">
-                {isMizo ? 'Aizawl chhung a thawktute Driving License leh Voter ID check-na' : 'Verify Driving License, Aadhaar, and vehicle suitability for steep hill dispatch.'}
-              </p>
-            </div>
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+          <div className="border-b border-slate-100 pb-2.5">
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
+              <Users className="w-4 h-4 text-emerald-600" />
+              <span>{isMizo ? 'Hna Thawktu KYC & Lehkha Pawmna' : 'Worker KYC Verification Queue'}</span>
+            </h3>
+            <p className="text-[11px] text-slate-500">
+              Verify driving licenses and IDs for safe terrain deployment across Mizoram.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {workers.map((w) => (
-              <div key={w.id} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+              <div key={w.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-bold text-white text-sm">{w.name}</h4>
-                    <span className="font-mono text-xs text-slate-400">{w.phone}</span>
+                    <h4 className="font-bold text-slate-900 text-xs sm:text-sm">{w.name}</h4>
+                    <span className="font-mono text-[11px] text-slate-500">{w.phone}</span>
                   </div>
 
-                  <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
                     w.verified
-                      ? 'bg-emerald-950 text-emerald-400 border-emerald-800'
-                      : 'bg-amber-950 text-amber-400 border-amber-800'
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                      : 'bg-amber-50 text-amber-800 border-amber-200'
                   }`}>
-                    {w.verified ? 'KYC Verified' : 'Pending Review'}
+                    {w.verified ? 'Verified' : 'Pending'}
                   </span>
                 </div>
 
-                <div className="text-xs text-slate-400 bg-slate-900 p-2.5 rounded-lg border border-slate-800 space-y-1">
-                  <div>Document: <strong className="text-white uppercase">{w.kycDocType.replace('_', ' ')}</strong></div>
-                  <div className="font-mono text-emerald-300">Doc #: {w.kycDocNumber}</div>
-                  <div>Vehicle: <strong className="text-white">{w.vehicleType}</strong></div>
-                  <div>Rating: <strong className="text-amber-400">{w.rating}★</strong> ({w.completedTasks} completed jobs)</div>
+                <div className="text-[11px] text-slate-600 bg-white p-2 rounded-lg border border-slate-200 space-y-0.5">
+                  <div>Doc: <strong className="text-slate-900 uppercase">{w.kycDocType.replace('_', ' ')}</strong> ({w.kycDocNumber})</div>
+                  <div>Rating: <strong className="text-amber-700">{w.rating}★</strong> ({w.completedTasks} jobs)</div>
                 </div>
 
                 {canVerifyWorkers && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => onVerifyWorker(w.id, !w.verified)}
-                      className={`flex-1 text-xs font-semibold py-2 rounded-lg transition ${
-                        w.verified
-                          ? 'bg-slate-800 hover:bg-slate-700 text-slate-300'
-                          : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                      }`}
-                    >
-                      {w.verified ? (isMizo ? 'Tih Tawp Leh (Revoke)' : 'Revoke Verification') : (isMizo ? 'Pawm Rawh (Approve KYC)' : 'Approve KYC')}
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => onVerifyWorker(w.id, !w.verified)}
+                    className={`w-full text-xs font-bold py-1.5 rounded-lg transition ${
+                      w.verified
+                        ? 'bg-slate-200 hover:bg-slate-300 text-slate-700'
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    }`}
+                  >
+                    {w.verified ? 'Revoke Verification' : 'Approve KYC'}
+                  </button>
                 )}
               </div>
             ))}
@@ -323,65 +320,61 @@ export const AdminControlCenter: React.FC<AdminControlCenterProps> = ({
 
       {/* SubTab 3: AI Logic Supervisor Console */}
       {activeSubTab === 'supervisor' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-indigo-400" />
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-indigo-600" />
               <div>
-                <h3 className="text-sm font-bold text-white">
-                  {isMizo ? 'AI Logic Supervisor: Tlangram Rawngbawlna Chhutna' : 'AI Logic Supervisor: Hill Platform Audit'}
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                  {isMizo ? 'AI Logic Supervisor: Tlangram Platform Audit' : 'AI Logic Supervisor: Hill Platform Audit'}
                 </h3>
-                <p className="text-xs text-slate-400">
-                  {isMizo ? 'Aizawl tlangchhip tana fairness chhutna leh thurawn' : 'Continuous terrain load monitoring, fraud mitigation, and locality fare integrity.'}
-                </p>
               </div>
             </div>
 
             <button
               onClick={handleRunAiAudit}
               disabled={isAuditing}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-medium transition"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1 font-semibold transition"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isAuditing ? 'animate-spin' : ''}`} />
-              <span>{isMizo ? 'Endik Ṭha Leh Rawh' : 'Run Supervisor Audit'}</span>
+              <RefreshCw className={`w-3 h-3 ${isAuditing ? 'animate-spin' : ''}`} />
+              <span>{isMizo ? 'Check Leh' : 'Audit'}</span>
             </button>
           </div>
 
           {supervisorReport && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                  <div className="text-slate-400 text-[10px] uppercase font-semibold">System Health</div>
-                  <div className="font-bold text-emerald-400 text-sm mt-0.5">{supervisorReport.systemHealth}</div>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="text-slate-500 text-[10px] uppercase font-semibold">System Health</div>
+                  <div className="font-bold text-emerald-700 text-xs mt-0.5">{supervisorReport.systemHealth}</div>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                  <div className="text-slate-400 text-[10px] uppercase font-semibold">Active Workers</div>
-                  <div className="font-bold text-white text-sm mt-0.5">{supervisorReport.metrics.activeWorkersOnline} Online</div>
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="text-slate-500 text-[10px] uppercase font-semibold">Active Workers</div>
+                  <div className="font-bold text-slate-900 text-xs mt-0.5">{supervisorReport.metrics.activeWorkersOnline} Online</div>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                  <div className="text-slate-400 text-[10px] uppercase font-semibold">In Progress Tasks</div>
-                  <div className="font-bold text-purple-400 text-sm mt-0.5">{supervisorReport.metrics.inProgressTasks}</div>
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="text-slate-500 text-[10px] uppercase font-semibold">Active Tasks</div>
+                  <div className="font-bold text-purple-700 text-xs mt-0.5">{supervisorReport.metrics.inProgressTasks}</div>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                  <div className="text-slate-400 text-[10px] uppercase font-semibold">Enabled Modules</div>
-                  <div className="font-bold text-cyan-400 text-sm mt-0.5">{supervisorReport.metrics.activeModulesCount} Modules</div>
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="text-slate-500 text-[10px] uppercase font-semibold">Modules</div>
+                  <div className="font-bold text-cyan-700 text-xs mt-0.5">{supervisorReport.metrics.activeModulesCount} Active</div>
                 </div>
               </div>
 
-              {/* Recommendations */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                  {isMizo ? 'Supervisor Thurawn (Active Recommendations):' : 'AI Supervisor Recommendations:'}
+              <div className="space-y-1.5">
+                <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-tight">
+                  Supervisor Recommendations:
                 </h4>
                 {supervisorReport.recommendations.map((rec: any, idx: number) => (
                   <div
                     key={idx}
-                    className="p-3 rounded-xl bg-slate-950 border border-indigo-900/40 text-xs flex items-start gap-3"
+                    className="p-2.5 rounded-xl bg-slate-50 border border-indigo-100 text-xs flex items-start gap-2"
                   >
-                    <span className="font-mono text-[10px] font-bold bg-indigo-950 text-indigo-300 px-2 py-0.5 rounded border border-indigo-800 shrink-0">
+                    <span className="font-mono text-[9px] font-bold bg-indigo-100 text-indigo-800 px-1.5 py-0.2 rounded border border-indigo-200 shrink-0">
                       {rec.priority}
                     </span>
-                    <span className="text-slate-300">
+                    <span className="text-slate-700 text-[11px]">
                       {isMizo ? rec.textMizo : rec.textEn}
                     </span>
                   </div>
@@ -390,35 +383,28 @@ export const AdminControlCenter: React.FC<AdminControlCenterProps> = ({
             </div>
           )}
 
-          {/* Direct Query to AI Dispatcher */}
-          <form onSubmit={handleAskSupervisor} className="pt-2 border-t border-slate-800 space-y-2">
-            <label className="block text-xs font-medium text-slate-300">
-              {isMizo ? 'AI Supervisor Hnen a Zawhna Zawt Rawh:' : 'Ask AI Supervisor for Locality / Terrain Consultation:'}
-            </label>
-            <div className="flex gap-2">
+          {/* Direct Query */}
+          <form onSubmit={handleAskSupervisor} className="pt-2 border-t border-slate-100 space-y-1.5">
+            <div className="flex gap-1.5">
               <input
                 type="text"
                 value={customAiQuery}
                 onChange={(e) => setCustomAiQuery(e.target.value)}
-                placeholder={
-                  isMizo
-                    ? 'Eg: Champhai aṭanga Lunglei inkar hna lak dan tur eng nge ni ang?'
-                    : 'Eg: Suggest fair fare policy for heavy LPG delivery down 150 terrace steps in Kulikawn...'
-                }
-                className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder={isMizo ? 'AI Supervisor hnenah zawhna zawt rawh...' : 'Ask AI Supervisor for hill pricing or dispatch advice...'}
+                className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
               />
               <button
                 type="submit"
                 disabled={isAuditing || !customAiQuery.trim()}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-4 py-2 rounded-xl font-semibold transition shrink-0"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition shrink-0"
               >
-                {isAuditing ? 'Consulting...' : (isMizo ? 'Zawt Rawh' : 'Consult AI')}
+                {isMizo ? 'Zawt' : 'Ask'}
               </button>
             </div>
 
             {aiAssistantReply && (
-              <div className="p-3 rounded-xl bg-indigo-950/40 border border-indigo-800/40 text-xs text-indigo-200 mt-2">
-                <span className="font-bold text-white block mb-1">Supervisor Advisory:</span>
+              <div className="p-2.5 rounded-lg bg-indigo-50 border border-indigo-100 text-xs text-indigo-950 mt-1.5">
+                <span className="font-bold block mb-0.5">Advisory:</span>
                 {aiAssistantReply}
               </div>
             )}
