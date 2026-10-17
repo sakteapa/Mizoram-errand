@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import { MIZORAM_LOCALITIES, INITIAL_MODULES, INITIAL_WORKERS } from './src/utils/mizoramData.ts';
@@ -30,6 +31,17 @@ const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 app.use(express.json());
+
+// Enable permissive CORS for Antigravity IDE webview and Android emulator
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 // In-memory application store
 let modulesState: PlatformModule[] = JSON.parse(JSON.stringify(INITIAL_MODULES));
@@ -948,12 +960,42 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 // Setup Vite middleware in dev or static serving in production
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
-    const { createServer: createViteServer } = await import('vite');
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
+    try {
+      const { createServer: createViteServer } = await import('vite');
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      app.use(vite.middlewares);
+
+      // In dev mode, transform and serve index.html for all non-API navigation routes
+      app.use('*', async (req: Request, res: Response, next) => {
+        const url = req.originalUrl;
+        if (url.startsWith('/api/')) {
+          return res.status(404).json({ success: false, error: 'API route not found' });
+        }
+        try {
+          const indexPath = path.resolve(__dirname, 'index.html');
+          if (fs.existsSync(indexPath)) {
+            let template = await fs.promises.readFile(indexPath, 'utf-8');
+            template = await vite.transformIndexHtml(url, template);
+            return res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+          }
+          next();
+        } catch (e) {
+          if (vite && typeof vite.ssrFixStacktrace === 'function') {
+            vite.ssrFixStacktrace(e as Error);
+          }
+          next(e);
+        }
+      });
+    } catch (viteErr) {
+      console.warn('[Vite Dev Warning] Vite middleware initialization failed, falling back to dist:', viteErr);
+      app.use(express.static(path.resolve(__dirname, 'dist')));
+      app.get('*', (req: Request, res: Response) => {
+        res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
+      });
+    }
   } else {
     app.use(express.static(path.resolve(__dirname, 'dist')));
     app.get('*', (req: Request, res: Response) => {
@@ -963,6 +1005,7 @@ async function startServer() {
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`[Mizoram Errand Server] Running on http://localhost:${PORT}`);
+    console.log(`[Android Emulator Loopback] http://10.0.2.2:${PORT}`);
   });
 }
 
