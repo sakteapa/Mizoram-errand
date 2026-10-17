@@ -15,7 +15,8 @@ import type {
   ServiceCategory, 
   TaskRecord, 
   WorkerProfile, 
-  UserRole 
+  UserRole,
+  PlatformSettings
 } from './types/platform.ts';
 
 export default function App() {
@@ -32,6 +33,12 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory>('errand');
   const [tasks, setTasks] = useState<TaskRecord[]>([]);
   const [workers, setWorkers] = useState<WorkerProfile[]>(INITIAL_WORKERS);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings>({
+    platformFeePercentage: 0,
+    promotionalNoticeMizo: 'Platform Fee lak a ni lo (0%). Hlawh 100% thawktu kutah a lut vek e!',
+    promotionalNoticeEn: '0% Platform Fee Active. Workers keep 100% of their earnings!',
+    updatedAt: new Date().toISOString(),
+  });
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isArchModalOpen, setIsArchModalOpen] = useState(false);
@@ -60,6 +67,13 @@ export default function App() {
       const wrkData = await wrkRes.json();
       if (wrkData.success && wrkData.workers) {
         setWorkers(wrkData.workers);
+      }
+
+      // Fetch platform settings
+      const setRes = await fetch('/api/settings');
+      const setData = await setRes.json();
+      if (setData.success && setData.settings) {
+        setPlatformSettings(setData.settings);
       }
     } catch (err) {
       console.warn('API fetch warning, using seeded data:', err);
@@ -197,6 +211,32 @@ export default function App() {
     }
   };
 
+  // Admin platform settings update
+  const handleUpdateSettings = async (newFee: number, noticeMizo?: string, noticeEn?: string) => {
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-role': activeRole,
+          'x-user-phone': userPhone,
+        },
+        body: JSON.stringify({
+          platformFeePercentage: newFee,
+          promotionalNoticeMizo: noticeMizo,
+          promotionalNoticeEn: noticeEn,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.settings) {
+        setPlatformSettings(data.settings);
+      }
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
+
   // Worker toggle online
   const handleToggleOnline = (isOnline: boolean) => {
     if (currentWorker) {
@@ -320,6 +360,7 @@ export default function App() {
             tasks={tasks}
             currentWorker={currentWorker}
             language={language}
+            platformSettings={platformSettings}
             onUpdateTaskStatus={handleUpdateTaskStatus}
             onToggleOnline={handleToggleOnline}
           />
@@ -332,8 +373,10 @@ export default function App() {
             workers={workers}
             userRole={activeRole}
             language={language}
+            platformSettings={platformSettings}
             onUpdateModule={handleUpdateModule}
             onVerifyWorker={handleVerifyWorker}
+            onUpdateSettings={handleUpdateSettings}
             onRefreshData={fetchData}
           />
         )}

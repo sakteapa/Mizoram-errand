@@ -50,16 +50,22 @@ test('calculateDistrictMetrics computes accurate totals and completion rates', (
     },
   ];
 
-  const result = calculateDistrictMetrics(dummyDistricts);
-  assert.equal(result.totalTasks, 1800);
-  assert.equal(result.completedTasks, 1670);
+  // Default 0% Platform Fee test (100% to workers)
+  const resultZeroFee = calculateDistrictMetrics(dummyDistricts, 0);
+  assert.equal(resultZeroFee.totalTasks, 1800);
+  assert.equal(resultZeroFee.completedTasks, 1670);
   // (1670 / 1800) * 100 = 92.777... -> 92.8%
-  assert.equal(result.overallCompletionRate, 92.8);
-  assert.equal(result.totalGrossRevenue, 353000);
-  assert.equal(result.platformCommissionRevenue, Math.round(353000 * 0.15));
-  assert.equal(result.workerPayouts, 353000 - Math.round(353000 * 0.15));
-  assert.equal(result.highestPerformingDistrict, 'Aizawl');
-  assert.equal(result.lowestCompletionDistrict, 'Champhai');
+  assert.equal(resultZeroFee.overallCompletionRate, 92.8);
+  assert.equal(resultZeroFee.totalGrossRevenue, 353000);
+  assert.equal(resultZeroFee.platformCommissionRevenue, 0); // 0% commission
+  assert.equal(resultZeroFee.workerPayouts, 353000); // 100% worker payout
+  assert.equal(resultZeroFee.highestPerformingDistrict, 'Aizawl');
+  assert.equal(resultZeroFee.lowestCompletionDistrict, 'Champhai');
+
+  // Custom 15% Platform Fee test
+  const result15Fee = calculateDistrictMetrics(dummyDistricts, 15);
+  assert.equal(result15Fee.platformCommissionRevenue, Math.round(353000 * 0.15));
+  assert.equal(result15Fee.workerPayouts, 353000 - Math.round(353000 * 0.15));
 });
 
 test('calculateDistrictMetrics handles empty array safely', () => {

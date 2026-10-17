@@ -44,11 +44,15 @@ import { Rupee } from './CurrencySymbol.tsx';
 
 interface AdminAnalyticsDashboardProps {
   language: 'en' | 'mizo';
+  platformFeePercentage?: number;
 }
 
 type DashboardSection = 'revenue' | 'districts' | 'categories' | 'all';
 
-export const AdminAnalyticsDashboard: React.FC<AdminAnalyticsDashboardProps> = ({ language }) => {
+export const AdminAnalyticsDashboard: React.FC<AdminAnalyticsDashboardProps> = ({ 
+  language,
+  platformFeePercentage = 0,
+}) => {
   const isMizo = language === 'mizo';
 
   // Sub-view selection to avoid vertical scroll fatigue
@@ -57,10 +61,10 @@ export const AdminAnalyticsDashboard: React.FC<AdminAnalyticsDashboardProps> = (
   const [selectedDistrictId, setSelectedDistrictId] = useState<string>('aizawl');
   const [districtSearch, setDistrictSearch] = useState<string>('');
 
-  // Computed summary across all 11 Mizoram districts
+  // Computed summary across all 11 Mizoram districts using dynamic platform fee
   const districtMetricsSummary = useMemo(() => {
-    return calculateDistrictMetrics(MIZORAM_DISTRICT_ANALYTICS);
-  }, []);
+    return calculateDistrictMetrics(MIZORAM_DISTRICT_ANALYTICS, platformFeePercentage);
+  }, [platformFeePercentage]);
 
   // Filtered district list based on search
   const filteredDistricts = useMemo(() => {
@@ -77,30 +81,39 @@ export const AdminAnalyticsDashboard: React.FC<AdminAnalyticsDashboardProps> = (
       || MIZORAM_DISTRICT_ANALYTICS[0];
   }, [selectedDistrictId]);
 
-  // Daily or Monthly data for revenue trend chart
+  // Daily or Monthly data for revenue trend chart (calculated dynamically based on platformFeePercentage)
   const trendData = useMemo(() => {
+    const feeRatio = Math.max(0, platformFeePercentage) / 100;
     if (timeHorizon === 'daily') {
-      return DAILY_REVENUE_TRENDS.map(item => ({
-        label: item.dayLabel,
-        grossVolume: item.grossVolume,
-        platformFee: item.platformFee,
-        workerEarnings: item.workerEarnings,
-        tasks: item.tasksCompleted,
-        hillSurcharge: item.hillSurchargeSum,
-      }));
+      return DAILY_REVENUE_TRENDS.map(item => {
+        const computedFee = Math.round(item.grossVolume * feeRatio);
+        const computedWorker = item.grossVolume - computedFee;
+        return {
+          label: item.dayLabel,
+          grossVolume: item.grossVolume,
+          platformFee: computedFee,
+          workerEarnings: computedWorker,
+          tasks: item.tasksCompleted,
+          hillSurcharge: item.hillSurchargeSum,
+        };
+      });
     } else {
-      return MONTHLY_REVENUE_TRENDS.map(item => ({
-        label: isMizo ? item.monthMizo.split(' ')[0] : item.month,
-        fullLabel: isMizo ? item.monthMizo : `${item.month} 2026`,
-        grossVolume: item.grossVolume,
-        platformFee: item.platformFee,
-        workerEarnings: item.workerEarnings,
-        tasks: item.completedTasks,
-        hillSurcharge: Math.round(item.grossVolume * 0.12),
-        growth: item.growthPercentage,
-      }));
+      return MONTHLY_REVENUE_TRENDS.map(item => {
+        const computedFee = Math.round(item.grossVolume * feeRatio);
+        const computedWorker = item.grossVolume - computedFee;
+        return {
+          label: isMizo ? item.monthMizo.split(' ')[0] : item.month,
+          fullLabel: isMizo ? item.monthMizo : `${item.month} 2026`,
+          grossVolume: item.grossVolume,
+          platformFee: computedFee,
+          workerEarnings: computedWorker,
+          tasks: item.completedTasks,
+          hillSurcharge: Math.round(item.grossVolume * 0.12),
+          growth: item.growthPercentage,
+        };
+      });
     }
-  }, [timeHorizon, isMizo]);
+  }, [timeHorizon, isMizo, platformFeePercentage]);
 
   // Summary figures
   const currentTotalGross = useMemo(() => {
@@ -256,17 +269,21 @@ export const AdminAnalyticsDashboard: React.FC<AdminAnalyticsDashboardProps> = (
             {/* Platform Margin */}
             <div className="bg-white border border-slate-200 p-3 sm:p-3.5 rounded-2xl shadow-xs">
               <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-                <span className="font-semibold text-[11px]">{isMizo ? 'Platform Hlep (15%)' : 'Platform Net (15%)'}</span>
-                <span className="p-1 rounded-md bg-cyan-50 text-cyan-700">
+                <span className="font-semibold text-[11px]">
+                  {isMizo ? `Platform Hlep (${platformFeePercentage}%)` : `Platform Margin (${platformFeePercentage}%)`}
+                </span>
+                <span className={`p-1 rounded-md ${platformFeePercentage === 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-cyan-50 text-cyan-700'}`}>
                   <Sparkles className="w-3.5 h-3.5" />
                 </span>
               </div>
-              <div className="text-lg sm:text-xl font-black text-cyan-700 font-mono flex items-center">
-                <Rupee className="w-4 h-4 text-cyan-700" />
+              <div className={`text-lg sm:text-xl font-black font-mono flex items-center ${platformFeePercentage === 0 ? 'text-emerald-700' : 'text-cyan-700'}`}>
+                <Rupee className="w-4 h-4" />
                 <span>{formatIndianCurrency(currentPlatformFee)}</span>
               </div>
-              <div className="text-[10px] text-slate-500 mt-0.5">
-                {isMizo ? 'Thawktu chan: 85%' : 'Couriers share: 85%'}
+              <div className="text-[10px] text-slate-500 mt-0.5 font-medium">
+                {platformFeePercentage === 0 
+                  ? (isMizo ? '0% Fee • 100% Thawktu Kutah' : '0% Fee • 100% to Couriers')
+                  : (isMizo ? `Thawktu chan: ${100 - platformFeePercentage}%` : `Couriers share: ${100 - platformFeePercentage}%`)}
               </div>
             </div>
 

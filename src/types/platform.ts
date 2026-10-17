@@ -154,3 +154,11 @@ export interface AiTaskAnalysis {
   suggestedWorkerType: string;
   safetyCheckPassed: boolean;
 }
+
+export interface PlatformSettings {
+  platformFeePercentage: number;
+  promotionalNoticeMizo: string;
+  promotionalNoticeEn: string;
+  updatedAt: string;
+}
+

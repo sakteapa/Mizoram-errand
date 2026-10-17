@@ -45,7 +45,10 @@ export interface CategoryRevenueMetric {
 /**
  * Calculates district completion rate and summary statistics
  */
-export function calculateDistrictMetrics(districts: DistrictMetric[]): {
+export function calculateDistrictMetrics(
+  districts: DistrictMetric[],
+  platformFeePercentage: number = 0
+): {
   totalTasks: number;
   completedTasks: number;
   overallCompletionRate: number;
@@ -97,7 +100,8 @@ export function calculateDistrictMetrics(districts: DistrictMetric[]): {
     ? Math.round((completedTasks / totalTasks) * 1000) / 10 
     : 0;
 
-  const platformCommissionRevenue = Math.round(totalGrossRevenue * 0.15);
+  const commissionRate = Math.max(0, platformFeePercentage) / 100;
+  const platformCommissionRevenue = Math.round(totalGrossRevenue * commissionRate);
   const workerPayouts = totalGrossRevenue - platformCommissionRevenue;
 
   return {

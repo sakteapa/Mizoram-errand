@@ -18,6 +18,7 @@ import type {
   TaskStatus,
   UserRole,
   ServiceCategory,
+  PlatformSettings,
 } from './src/types/platform.ts';
 
 dotenv.config();
@@ -142,6 +143,14 @@ let auditLogs: AuditLog[] = [
     details: 'Verified driving license for worker Lalrinsanga (MZ01-2019-004512).',
   },
 ];
+
+// Platform Settings (Dynamic Commission & Policies)
+let platformSettingsState: PlatformSettings = {
+  platformFeePercentage: 0, // Default 0% commission: 100% payout to workers!
+  promotionalNoticeMizo: 'Platform Fee lak a ni lo (0%). Hlawh 100% thawktu kutah a lut vek e!',
+  promotionalNoticeEn: '0% Platform Fee Active. Workers keep 100% of all task earnings!',
+  updatedAt: new Date().toISOString(),
+};
 
 // OTP storage: phone -> { otp, expiresAt }
 const otpStore = new Map<string, { otp: string; expiresAt: number }>();
@@ -298,6 +307,61 @@ app.patch('/api/modules/:id', (req: Request, res: Response) => {
     success: true,
     module: modulesState[index],
     message: `Module ${modulesState[index].name} updated successfully.`,
+  });
+});
+
+// Platform Settings (Fetch)
+app.get('/api/settings', (req: Request, res: Response) => {
+  res.json({
+    success: true,
+    settings: platformSettingsState,
+  });
+});
+
+// Platform Settings (Update - Super Admin & System Admin only)
+app.patch('/api/settings', (req: Request, res: Response) => {
+  const { platformFeePercentage, promotionalNoticeMizo, promotionalNoticeEn } = req.body;
+  const actorRole: UserRole = (req.headers['x-user-role'] as UserRole) || 'super_admin';
+
+  if (actorRole !== 'super_admin' && actorRole !== 'system_admin') {
+    return res.status(403).json({
+      success: false,
+      error: 'Forbidden: Only Super Admin and System Admin can modify platform settings.',
+      errorMizo: 'Super Admin emaw System Admin chauhvin platform settings an thlak thei.',
+    });
+  }
+
+  if (typeof platformFeePercentage === 'number') {
+    if (platformFeePercentage < 0 || platformFeePercentage > 50) {
+      return res.status(400).json({
+        success: false,
+        error: 'Platform fee percentage must be between 0% and 50%.',
+        errorMizo: 'Platform fee percentage chu 0% leh 50% inkar a ni tur a ni.',
+      });
+    }
+    const previousFee = platformSettingsState.platformFeePercentage;
+    platformSettingsState.platformFeePercentage = platformFeePercentage;
+    platformSettingsState.updatedAt = new Date().toISOString();
+
+    if (promotionalNoticeMizo !== undefined) platformSettingsState.promotionalNoticeMizo = promotionalNoticeMizo;
+    if (promotionalNoticeEn !== undefined) platformSettingsState.promotionalNoticeEn = promotionalNoticeEn;
+
+    auditLogs.unshift({
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      actorPhone: (req.headers['x-user-phone'] as string) || '+919862000000',
+      actorRole,
+      action: 'Platform Fee Updated',
+      actionMizo: 'Platform Commission Fee tihdanglam a ni',
+      details: `Commission fee changed from ${previousFee}% to ${platformFeePercentage}%. Worker payout ratio is now ${100 - platformFeePercentage}%.`,
+    });
+  }
+
+  res.json({
+    success: true,
+    settings: platformSettingsState,
+    message: `Platform settings updated successfully. Commission fee is now ${platformSettingsState.platformFeePercentage}%.`,
+    messageMizo: `Platform settings tihdanglam fel a ni. Tunah commission fee chu ${platformSettingsState.platformFeePercentage}% a ni e.`,
   });
 });
 
@@ -468,14 +532,23 @@ app.patch('/api/tasks/:id/status', (req: Request, res: Response) => {
       });
     }
 
+    const feePercent = platformSettingsState.platformFeePercentage;
+    const workerRatio = (100 - feePercent) / 100;
+    const workerCredited = Math.round(task.totalFee * workerRatio);
+    const platformFeeDeducted = task.totalFee - workerCredited;
+
     task.completedAt = now;
     task.status = 'COMPLETED';
     task.proofNote = proofNote || 'Delivered / Completed as requested';
     task.timeline.push({
       status: 'COMPLETED',
       timestamp: now,
-      note: `Task verified and completed. Payment of ₹${task.totalFee} credited to worker ledger.`,
-      noteMizo: `Hna zawh fel a ni. Thawktu hlawh ₹${task.totalFee} pek fel a ni.`,
+      note: feePercent === 0
+        ? `Task verified and completed. Full payment of ₹${task.totalFee} (100% - 0% platform fee) credited to worker ledger.`
+        : `Task verified and completed. Payment of ₹${workerCredited} (${100 - feePercent}% of ₹${task.totalFee}, ₹${platformFeeDeducted} platform fee) credited to worker ledger.`,
+      noteMizo: feePercent === 0
+        ? `Hna zawh fel a ni. Thawktu hlawh kim ₹${task.totalFee} (100% - commission lak a ni lo) pek fel a ni.`
+        : `Hna zawh fel a ni. Thawktu hlawh ₹${workerCredited} (${100 - feePercent}%, platform fee: ₹${platformFeeDeducted}) pek fel a ni.`,
     });
 
     // Credit worker earnings
@@ -483,7 +556,7 @@ app.patch('/api/tasks/:id/status', (req: Request, res: Response) => {
       const worker = workersState.find(w => w.id === task.workerId);
       if (worker) {
         worker.completedTasks += 1;
-        worker.earningsBalance += Math.round(task.totalFee * 0.85); // 85% worker payout
+        worker.earningsBalance += workerCredited;
       }
     }
   } else if (nextStatus === 'CANCELLED') {

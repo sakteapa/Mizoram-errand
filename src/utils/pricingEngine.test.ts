@@ -55,6 +55,8 @@ test('calculateHillTerrainFare computes steep terrain surcharge and concrete sta
     elevationMeters: 920,
     steepnessRating: 4,
     popularLandmarks: ['Millennium Centre'],
+    latitude: 23.7335,
+    longitude: 92.7176,
   };
 
   const durtlang: MizoramLocality = {
@@ -64,6 +66,8 @@ test('calculateHillTerrainFare computes steep terrain surcharge and concrete sta
     elevationMeters: 1150,
     steepnessRating: 5,
     popularLandmarks: ['Synod Hospital'],
+    latitude: 23.7845,
+    longitude: 92.7342,
   };
 
   const resultWithSteps = calculateHillTerrainFare(dummyModule, baraBazar, durtlang, 120);

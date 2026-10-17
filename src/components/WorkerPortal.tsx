@@ -23,12 +23,13 @@ import {
 import { MIZORAM_LOCALITIES } from '../utils/mizoramData.ts';
 import { Rupee } from './CurrencySymbol.tsx';
 import { PointToPointGpsMap } from './PointToPointGpsMap.tsx';
-import type { TaskRecord, WorkerProfile } from '../types/platform.ts';
+import type { TaskRecord, WorkerProfile, PlatformSettings } from '../types/platform.ts';
 
 interface WorkerPortalProps {
   tasks: TaskRecord[];
   currentWorker: WorkerProfile | null;
   language: 'en' | 'mizo';
+  platformSettings?: PlatformSettings;
   onUpdateTaskStatus: (taskId: string, nextStatus: 'ACCEPTED' | 'IN_PROGRESS' | 'COMPLETED', payload?: any) => Promise<void>;
   onToggleOnline: (isOnline: boolean) => void;
 }
@@ -37,6 +38,7 @@ export const WorkerPortal: React.FC<WorkerPortalProps> = ({
   tasks,
   currentWorker,
   language,
+  platformSettings,
   onUpdateTaskStatus,
   onToggleOnline,
 }) => {
@@ -145,6 +147,53 @@ export const WorkerPortal: React.FC<WorkerPortalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Platform Fee & Commission Transparency Card */}
+      {(!platformSettings || platformSettings.platformFeePercentage === 0) ? (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 sm:p-3.5 shadow-2xs flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+              0%
+            </div>
+            <div>
+              <span className="font-bold text-emerald-950 text-xs sm:text-sm block">
+                {isMizo ? '0% Platform Commission (Hlawh 100% Thawktu Tan)' : '0% Platform Fee Active (100% Payout)'}
+              </span>
+              <span className="text-emerald-800 text-[11px] block mt-0.5">
+                {isMizo 
+                  ? 'Tun dinhmunah platform commission lak a ni lo. I hna thawh man zawng zawng 100% i chang vek e!' 
+                  : 'Zero platform commission active. You receive 100% of all customer fees directly.'}
+              </span>
+            </div>
+          </div>
+          <span className="text-[10px] bg-emerald-200/80 text-emerald-900 font-bold px-2 py-0.5 rounded-full border border-emerald-300 shrink-0 hidden sm:inline">
+            100% Worker Payout
+          </span>
+        </div>
+      ) : (
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-3 sm:p-3.5 shadow-2xs flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+              {100 - platformSettings.platformFeePercentage}%
+            </div>
+            <div>
+              <span className="font-bold text-blue-950 text-xs sm:text-sm block">
+                {isMizo 
+                  ? `Thawktu Chan: ${100 - platformSettings.platformFeePercentage}% (Platform Fee: ${platformSettings.platformFeePercentage}%)` 
+                  : `Courier Share: ${100 - platformSettings.platformFeePercentage}% (Platform Fee: ${platformSettings.platformFeePercentage}%)`}
+              </span>
+              <span className="text-blue-800 text-[11px] block mt-0.5">
+                {isMizo
+                  ? `Hna zawh fel a nihin total fare aṭangin ${100 - platformSettings.platformFeePercentage}% i account-ah a lut ang.`
+                  : `You receive ${100 - platformSettings.platformFeePercentage}% of task fees credited immediately upon verification.`}
+              </span>
+            </div>
+          </div>
+          <span className="text-[10px] bg-blue-100 text-blue-900 font-bold px-2 py-0.5 rounded-full border border-blue-200 shrink-0 hidden sm:inline">
+            {platformSettings.platformFeePercentage}% Platform Fee
+          </span>
+        </div>
+      )}
 
       {/* Section 1: My Active Working Tasks */}
       <div>
