@@ -376,12 +376,24 @@ app.get('/api/tasks', (req: Request, res: Response) => {
 
   let filtered = [...tasksState];
 
+  // Check and expire stale worker offer reservations (>60s)
+  const currentTime = Date.now();
+  for (const t of tasksState) {
+    if (t.status === 'PENDING' && t.assignedWorkerExpiresAt && new Date(t.assignedWorkerExpiresAt).getTime() < currentTime) {
+      t.targetWorkerId = undefined;
+      t.assignedWorkerExpiresAt = undefined;
+    }
+  }
+
   if (role === 'client' && phone) {
     filtered = filtered.filter(t => t.clientPhone === phone);
   } else if (role === 'worker') {
     if (workerId) {
-      // Show tasks assigned to this worker, plus any unassigned PENDING tasks
-      filtered = filtered.filter(t => t.workerId === workerId || t.status === 'PENDING');
+      // Show tasks assigned to this worker, plus any unassigned PENDING tasks (broadcast or reserved specifically for this worker)
+      filtered = filtered.filter(t => 
+        t.workerId === workerId || 
+        (t.status === 'PENDING' && (!t.targetWorkerId || t.targetWorkerId === workerId))
+      );
     }
   }
 
@@ -406,6 +418,12 @@ app.post('/api/tasks', (req: Request, res: Response) => {
     gpsRoute,
     stairStepsCount = 0,
     notes = '',
+    estimatedItemCost = 0,
+    paymentMode = 'cod',
+    urgency = 'standard',
+    scheduledTime,
+    dispatchMode = 'broadcast',
+    preferredWorkerId,
   } = req.body;
 
   const phoneCheck = validateAndFormatMizoPhone(clientPhone);
@@ -425,16 +443,38 @@ app.post('/api/tasks', (req: Request, res: Response) => {
   const pickup = MIZORAM_LOCALITIES.find(l => l.id === pickupLocalityId) || MIZORAM_LOCALITIES[0];
   const drop = MIZORAM_LOCALITIES.find(l => l.id === dropLocalityId) || MIZORAM_LOCALITIES[1];
 
-  const pricing = calculateHillTerrainFare(module, pickup, drop, stairStepsCount);
+  const pricing = calculateHillTerrainFare(module, pickup, drop, stairStepsCount, urgency);
   const taskId = `TSK-MZ-${Math.floor(1000 + Math.random() * 9000)}`;
   const now = new Date().toISOString();
   const completionOtp = Math.floor(100000 + Math.random() * 900000).toString();
   const lowConnectivityToken = generateLowConnectivityToken(taskId, phoneCheck.formatted, Date.now());
 
+  // Smart dispatch: Direct preferred worker or auto-reserve top candidate for 60 seconds
+  let targetWorkerId: string | undefined = undefined;
+  let assignedWorkerExpiresAt: string | undefined = undefined;
+
+  if (preferredWorkerId) {
+    const prefWorker = workersState.find(w => w.id === preferredWorkerId);
+    if (prefWorker && prefWorker.isOnline) {
+      targetWorkerId = prefWorker.id;
+      assignedWorkerExpiresAt = new Date(Date.now() + 60 * 1000).toISOString();
+    }
+  } else if (dispatchMode === 'direct_worker') {
+    const candidates = rankWorkerCandidates(workersState, category, pickup.id);
+    if (candidates.length > 0) {
+      targetWorkerId = candidates[0].worker.id;
+      assignedWorkerExpiresAt = new Date(Date.now() + 60 * 1000).toISOString();
+    }
+  }
+
+  const itemCostNum = Math.max(0, Number(estimatedItemCost) || 0);
+  const urgencyLabel = urgency === 'urgent' ? ' [URGENT/HMANHMAWH]' : urgency === 'scheduled' ? ` [SCHEDULED: ${scheduledTime}]` : '';
+  const itemBudgetLabel = itemCostNum > 0 ? ` + Thil lei tur: ₹${itemCostNum} (${paymentMode.toUpperCase()})` : '';
+
   const newTask: TaskRecord = {
     id: taskId,
-    title: title || `${module.name} from ${pickup.name} to ${drop.name}`,
-    titleMizo: titleMizo || `${module.nameMizo} (${pickup.name} aṭanga ${drop.name})`,
+    title: title || `${module.name} from ${pickup.name} to ${drop.name}${urgencyLabel}`,
+    titleMizo: titleMizo || `${module.nameMizo} (${pickup.name} aṭanga ${drop.name})${urgencyLabel}`,
     category,
     clientPhone: phoneCheck.formatted,
     clientName: clientName || 'Chhawrtu',
@@ -448,7 +488,16 @@ app.post('/api/tasks', (req: Request, res: Response) => {
     baseFee: pricing.baseFee,
     hillSurcharge: pricing.hillSurcharge,
     stairFee: pricing.stairFee,
+    urgencySurcharge: pricing.urgencySurcharge,
     totalFee: pricing.totalFee,
+    estimatedItemCost: itemCostNum,
+    paymentMode,
+    urgency,
+    scheduledTime,
+    dispatchMode,
+    preferredWorkerId,
+    targetWorkerId,
+    assignedWorkerExpiresAt,
     notes,
     status: 'PENDING',
     completionOtp,
@@ -458,20 +507,24 @@ app.post('/api/tasks', (req: Request, res: Response) => {
       {
         status: 'PENDING',
         timestamp: now,
-        note: `Task initiated with hill difficulty level ${pricing.hillDifficulty}/5 and ₹${pricing.totalFee} estimated fee.`,
-        noteMizo: `Hna siam a ni, tlangram harsatna level ${pricing.hillDifficulty}/5 leh man ₹${pricing.totalFee}.`,
+        note: `Task initiated (${urgency.toUpperCase()}) with difficulty ${pricing.hillDifficulty}/5, delivery fee ₹${pricing.totalFee}${itemBudgetLabel}.`,
+        noteMizo: `Hna siam a ni (${urgency === 'urgent' ? 'HMANHMAWH' : 'STANDARD'}), hlawh ₹${pricing.totalFee}${itemBudgetLabel}.`,
       },
     ],
   };
 
   tasksState.unshift(newTask);
 
+  const dispatchMsg = targetWorkerId 
+    ? 'Hna siam fel a ni. Thawktu hnai bik thlan hnenah second 60 chhung chhanna nghah a ni.' 
+    : 'Hna siam fel a ni. Thawktu hnai ber berte hnenah thawn mek a ni.';
+
   res.status(201).json({
     success: true,
     task: newTask,
     pricing,
-    message: 'Task successfully created. Broadcasting to nearest verified workers in Aizawl.',
-    messageMizo: 'Hna siam fel a ni. Thawktu hnai ber berte hnenah thawn mek a ni.',
+    message: 'Task successfully created and dispatched.',
+    messageMizo: dispatchMsg,
   });
 });
 
@@ -540,15 +593,20 @@ app.patch('/api/tasks/:id/status', (req: Request, res: Response) => {
     task.completedAt = now;
     task.status = 'COMPLETED';
     task.proofNote = proofNote || 'Delivered / Completed as requested';
+    if (req.body.actualItemCost !== undefined) task.actualItemCost = Number(req.body.actualItemCost);
+    if (req.body.receiptPhotoUrl) task.receiptPhotoUrl = req.body.receiptPhotoUrl;
+
+    const receiptNote = task.actualItemCost ? ` (Thil lei man: ₹${task.actualItemCost})` : '';
+
     task.timeline.push({
       status: 'COMPLETED',
       timestamp: now,
       note: feePercent === 0
-        ? `Task verified and completed. Full payment of ₹${task.totalFee} (100% - 0% platform fee) credited to worker ledger.`
-        : `Task verified and completed. Payment of ₹${workerCredited} (${100 - feePercent}% of ₹${task.totalFee}, ₹${platformFeeDeducted} platform fee) credited to worker ledger.`,
+        ? `Task verified and completed${receiptNote}. Full payment of ₹${task.totalFee} (100% - 0% platform fee) credited to worker ledger.`
+        : `Task verified and completed${receiptNote}. Payment of ₹${workerCredited} (${100 - feePercent}% of ₹${task.totalFee}, ₹${platformFeeDeducted} platform fee) credited to worker ledger.`,
       noteMizo: feePercent === 0
-        ? `Hna zawh fel a ni. Thawktu hlawh kim ₹${task.totalFee} (100% - commission lak a ni lo) pek fel a ni.`
-        : `Hna zawh fel a ni. Thawktu hlawh ₹${workerCredited} (${100 - feePercent}%, platform fee: ₹${platformFeeDeducted}) pek fel a ni.`,
+        ? `Hna zawh fel a ni${receiptNote}. Thawktu hlawh kim ₹${task.totalFee} (100% - commission lak a ni lo) pek fel a ni.`
+        : `Hna zawh fel a ni${receiptNote}. Thawktu hlawh ₹${workerCredited} (${100 - feePercent}%, platform fee: ₹${platformFeeDeducted}) pek fel a ni.`,
     });
 
     // Credit worker earnings
@@ -560,12 +618,14 @@ app.patch('/api/tasks/:id/status', (req: Request, res: Response) => {
       }
     }
   } else if (nextStatus === 'CANCELLED') {
+    const reason = req.body.cancellationReason || 'Cancelled by client / Chhawrtu in a thulh';
+    task.cancellationReason = reason;
     task.status = 'CANCELLED';
     task.timeline.push({
       status: 'CANCELLED',
       timestamp: now,
-      note: 'Task was cancelled.',
-      noteMizo: 'Hna thulh a ni.',
+      note: `Task was cancelled. Reason: ${reason}`,
+      noteMizo: `Hna thulh a ni. A chhan: ${reason}`,
     });
   }
 

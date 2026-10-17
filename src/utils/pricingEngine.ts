@@ -1,4 +1,4 @@
-import type { TaskStatus, ServiceCategory, PlatformModule, MizoramLocality, WorkerProfile } from '../types/platform.ts';
+import type { TaskStatus, ServiceCategory, PlatformModule, MizoramLocality, WorkerProfile, TaskUrgency } from '../types/platform.ts';
 
 /**
  * Validates and formats Indian / Mizoram phone numbers (+91)
@@ -44,6 +44,7 @@ export interface HillPricingBreakdown {
   hillSurcharge: number;
   stairStepsCount: number;
   stairFee: number;
+  urgencySurcharge: number;
   totalFee: number;
 }
 
@@ -54,7 +55,8 @@ export function calculateHillTerrainFare(
   module: PlatformModule,
   pickup: MizoramLocality,
   drop: MizoramLocality,
-  stairStepsCount: number = 0
+  stairStepsCount: number = 0,
+  urgency: TaskUrgency = 'standard'
 ): HillPricingBreakdown {
   const baseFee = module.basePrice;
   const isSameLocality = pickup.id === drop.id;
@@ -85,7 +87,10 @@ export function calculateHillTerrainFare(
   const sanitizedSteps = Math.max(0, stairStepsCount);
   const stairFee = Math.round(sanitizedSteps * 0.60); // 60 paise per step
 
-  const totalFee = Math.max(baseFee, baseFee + distanceFee + hillSurcharge + stairFee);
+  // Urgent rush dispatch surcharge
+  const urgencySurcharge = urgency === 'urgent' ? Math.max(30, Math.round(baseFee * 0.25)) : 0;
+
+  const totalFee = Math.max(baseFee, baseFee + distanceFee + hillSurcharge + stairFee + urgencySurcharge);
 
   return {
     baseFee,
@@ -96,6 +101,7 @@ export function calculateHillTerrainFare(
     hillSurcharge,
     stairStepsCount: sanitizedSteps,
     stairFee,
+    urgencySurcharge,
     totalFee,
   };
 }

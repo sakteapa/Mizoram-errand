@@ -77,8 +77,13 @@ test('calculateHillTerrainFare computes steep terrain surcharge and concrete sta
   assert.equal(resultWithSteps.hillDifficulty, 5);
   assert.equal(resultWithSteps.stairStepsCount, 120);
   assert.equal(resultWithSteps.stairFee, 72); // 120 * 0.60
+  assert.equal(resultWithSteps.urgencySurcharge, 0);
   assert.ok(resultWithSteps.hillSurcharge > 0);
   assert.ok(resultWithSteps.totalFee > resultWithSteps.baseFee + resultWithSteps.stairFee);
+
+  const urgentResult = calculateHillTerrainFare(dummyModule, baraBazar, durtlang, 120, 'urgent');
+  assert.ok(urgentResult.urgencySurcharge >= 30);
+  assert.equal(urgentResult.totalFee, resultWithSteps.totalFee + urgentResult.urgencySurcharge);
 });
 
 test('isValidStatusTransition strictly enforces task lifecycle', () => {

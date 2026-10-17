@@ -16,7 +16,10 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
-  Navigation
+  Navigation,
+  Zap,
+  ShoppingBag,
+  MessageCircle
 } from 'lucide-react';
 import { MIZORAM_LOCALITIES } from '../utils/mizoramData.ts';
 import { Rupee } from './CurrencySymbol.tsx';
@@ -128,11 +131,21 @@ export const TaskTracker: React.FC<TaskTrackerProps> = ({
             >
               {/* Header line: ID, status, fee */}
               <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <span className="font-mono text-xs font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                     {task.id}
                   </span>
-                  <span className="text-[11px] text-slate-400">
+                  {task.urgency === 'urgent' && (
+                    <span className="bg-amber-100 text-amber-900 border border-amber-300 px-1.5 py-0.5 rounded text-[10px] font-black flex items-center gap-0.5 animate-pulse">
+                      <Zap className="w-2.5 h-2.5" /> URGENT
+                    </span>
+                  )}
+                  {task.urgency === 'scheduled' && (
+                    <span className="bg-purple-100 text-purple-900 border border-purple-300 px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-0.5">
+                      <Clock className="w-2.5 h-2.5" /> {task.scheduledTime || 'Scheduled'}
+                    </span>
+                  )}
+                  <span className="text-[11px] text-slate-400 ml-1">
                     {new Date(task.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -173,6 +186,36 @@ export const TaskTracker: React.FC<TaskTrackerProps> = ({
                   {task.stairStepsCount} steps • Hill {task.hillDifficulty}/5
                 </span>
               </div>
+
+              {/* Item Purchase Budget card */}
+              {task.estimatedItemCost && task.estimatedItemCost > 0 && (
+                <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-2.5 text-xs text-amber-950 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <ShoppingBag className="w-4 h-4 text-amber-700" />
+                    <div>
+                      <span className="font-bold block leading-tight">
+                        {isMizo ? 'Thil Lei Man Tur (Budget):' : 'Item Purchase Budget:'} ₹{task.estimatedItemCost}
+                      </span>
+                      <span className="text-[10px] text-amber-800">
+                        Payment: <strong className="uppercase">{task.paymentMode || 'COD'}</strong>
+                      </span>
+                    </div>
+                  </div>
+                  {task.actualItemCost ? (
+                    <div className="text-right">
+                      <span className="text-[10px] text-emerald-800 font-bold block">{isMizo ? 'Bill Dik Tak:' : 'Actual Store Bill:'}</span>
+                      <span className="font-mono font-black text-emerald-900 text-sm">₹{task.actualItemCost}</span>
+                    </div>
+                  ) : (
+                    <div className="text-right">
+                      <span className="text-[10px] text-slate-500 block">{isMizo ? 'Total Payable:' : 'Total Payable:'}</span>
+                      <span className="font-mono font-black text-slate-900 text-xs">
+                        ₹{task.totalFee + task.estimatedItemCost}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Point-to-Point GPS Bar */}
               {(() => {
@@ -251,13 +294,30 @@ export const TaskTracker: React.FC<TaskTrackerProps> = ({
                     </div>
                   </div>
 
-                  <a
-                    href={`tel:${task.workerPhone}`}
-                    className="bg-white hover:bg-slate-100 text-emerald-800 text-xs px-2.5 py-1 rounded-lg border border-slate-200 font-semibold flex items-center gap-1 shadow-2xs shrink-0"
-                  >
-                    <Phone className="w-3 h-3 text-emerald-600" />
-                    <span>Call</span>
-                  </a>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <a
+                      href={`https://wa.me/${task.workerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(
+                        isMizo 
+                          ? `Chibai ${task.workerName}, Mizoram Errand aṭangin ka hna (${task.titleMizo}) chungchangah ka rawn bia che a.` 
+                          : `Hi ${task.workerName}, regarding my Mizoram Errand task (${task.title}).`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-lg border border-emerald-200 font-semibold flex items-center gap-1 shadow-2xs transition"
+                      title="Chat on WhatsApp"
+                    >
+                      <MessageCircle className="w-3 h-3 text-emerald-600" />
+                      <span>WhatsApp</span>
+                    </a>
+
+                    <a
+                      href={`tel:${task.workerPhone}`}
+                      className="bg-white hover:bg-slate-100 text-slate-800 text-xs px-2.5 py-1 rounded-lg border border-slate-200 font-semibold flex items-center gap-1 shadow-2xs"
+                    >
+                      <Phone className="w-3 h-3 text-emerald-600" />
+                      <span>Call</span>
+                    </a>
+                  </div>
                 </div>
               )}
 

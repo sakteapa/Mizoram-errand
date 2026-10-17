@@ -93,6 +93,10 @@ export interface WorkerProfile {
   earningsBalance: number;
 }
 
+export type TaskUrgency = 'standard' | 'urgent' | 'scheduled';
+export type PaymentMode = 'cod' | 'upi_online' | 'pay_on_pickup';
+export type DispatchMode = 'broadcast' | 'direct_worker';
+
 export interface TaskRecord {
   id: string;
   title: string;
@@ -110,7 +114,19 @@ export interface TaskRecord {
   baseFee: number;
   hillSurcharge: number;
   stairFee: number;
+  urgencySurcharge?: number;
   totalFee: number;
+  estimatedItemCost?: number;
+  actualItemCost?: number;
+  paymentMode?: PaymentMode;
+  urgency?: TaskUrgency;
+  scheduledTime?: string;
+  dispatchMode?: DispatchMode;
+  preferredWorkerId?: string;
+  targetWorkerId?: string;
+  assignedWorkerExpiresAt?: string;
+  receiptPhotoUrl?: string;
+  cancellationReason?: string;
   notes?: string;
   status: TaskStatus;
   workerId?: string;
