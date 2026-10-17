@@ -44,6 +44,23 @@ export default function App() {
   const [isArchModalOpen, setIsArchModalOpen] = useState(false);
   const [isLoadingFeed, setIsLoadingFeed] = useState(false);
 
+  // Eye-friendly theme state (defaults to 'dark' for zero glare and comfortable viewing)
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('zox_theme') : null;
+    return (saved === 'light' || saved === 'dark') ? saved : 'dark';
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('zox_theme', theme);
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  }, [theme]);
+
   // Fetch initial data from server
   const fetchData = useCallback(async () => {
     setIsLoadingFeed(true);
@@ -250,10 +267,12 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-emerald-600 selection:text-white pb-16 sm:pb-0">
-      {/* Platform Header (Light Theme) */}
+      {/* Platform Header */}
       <Header
         language={language}
         setLanguage={setLanguage}
+        theme={theme}
+        setTheme={setTheme}
         activeRole={activeRole}
         setActiveRole={handleRoleChange}
         userPhone={userPhone}

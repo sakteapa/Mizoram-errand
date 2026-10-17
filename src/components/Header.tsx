@@ -9,13 +9,17 @@ import {
   Briefcase, 
   User, 
   Code2,
-  ChevronDown
+  ChevronDown,
+  Moon,
+  Sun
 } from 'lucide-react';
 import type { UserRole } from '../types/platform.ts';
 
 interface HeaderProps {
   language: 'en' | 'mizo';
   setLanguage: (lang: 'en' | 'mizo') => void;
+  theme: 'dark' | 'light';
+  setTheme: (theme: 'dark' | 'light') => void;
   activeRole: UserRole;
   setActiveRole: (role: UserRole) => void;
   userPhone: string;
@@ -30,6 +34,8 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   language,
   setLanguage,
+  theme,
+  setTheme,
   activeRole,
   setActiveRole,
   userPhone,
@@ -162,6 +168,20 @@ export const Header: React.FC<HeaderProps> = ({
               MIZO
             </button>
           </div>
+
+          {/* Theme Toggle (Dark / Light) */}
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="p-1.5 rounded-lg border border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center justify-center shadow-2xs"
+            title={theme === 'dark' ? (isMizo ? 'Eng (Light mode) ah thlak' : 'Switch to Light') : (isMizo ? 'Thim (Dark mode - Hmuh nuam) ah thlak' : 'Switch to Dark')}
+            aria-label="Toggle Theme"
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-3.5 h-3.5 text-amber-400" />
+            ) : (
+              <Moon className="w-3.5 h-3.5 text-slate-600" />
+            )}
+          </button>
 
           {/* Quick RBAC Role Selector */}
           <div className="relative inline-flex items-center">
